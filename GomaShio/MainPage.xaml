@@ -1,0 +1,38 @@
+﻿<Page
+    x:Class="GomaShio.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:GomaShio"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d" >
+    <Grid Margin="0,0,0,0">
+
+        <SplitView x:Name="splitView"
+                   DisplayMode="CompactOverlay"
+                   CompactPaneLength ="48"
+                   OpenPaneLength="200"
+                   IsPaneOpen="{Binding ElementName=HamburgerBtn,Path=IsChecked, Mode=TwoWay}" PaneBackground="#FFDEE7FF" >
+            <SplitView.Pane>
+                <Grid HorizontalAlignment="Stretch" Margin="0,0,0,0" >
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="48"></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <ToggleButton Grid.Row="0" x:Name="HamburgerBtn" Width="48" VerticalAlignment="Stretch" >
+                        <ToggleButton.Content>
+                            <FontIcon x:Name="Hamburger" FontFamily="Segoe MDL2 Assets" Glyph="" />
+                        </ToggleButton.Content>
+                    </ToggleButton>
+                    <StackPanel Margin="0,0,0,0" Grid.Row="1">
+                        <RadioButton x:Uid="MainPageConfiguRadio" Style="{StaticResource SplitViewRadioButtonStyle}" x:Name="MainPageConfiguRadio" GroupName="Navi" Tag="&#xE115;" Checked="RadioButton1_Checked" Content="Configure" />
+                        <RadioButton x:Uid="MainPageAccountListRadio" Style="{StaticResource SplitViewRadioButtonStyle}" x:Name="MainPageAccountListRadio" GroupName="Navi" Tag="&#xE82D;" Checked="RadioButton2_Checked" Content="Account List" />
+                    </StackPanel>
+                </Grid>
+            </SplitView.Pane>
+            <SplitView.Content>
+                <Frame x:Name="MainContentFrame" />
+            </SplitView.Content>
+        </SplitView>
+    </Grid>
+</Page>

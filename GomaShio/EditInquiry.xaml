@@ -1,0 +1,50 @@
+﻿<ContentDialog
+    x:Uid="EditInquiryDialog"
+    x:Class="GomaShio.EditInquiry"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:GomaShio"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="Edit Item"
+    PrimaryButtonText="OK"
+    SecondaryButtonText="Cancel"
+    PrimaryButtonClick="ContentDialog_PrimaryButtonClick"
+    SecondaryButtonClick="ContentDialog_SecondaryButtonClick" Loaded="ContentDialog_Loaded">
+
+    <Grid Margin="0,0,0,0" Width="450">
+        <Grid VerticalAlignment="Top">
+            <TextBlock x:Uid="InquiryItemNameTitle" HorizontalAlignment="Left" Margin="0,0,0,0" Text="Item Name" VerticalAlignment="center" Width="69"/>
+            <ComboBox Name="InquiryItemName" Margin="89,0,5,0" Text="" VerticalAlignment="Center" HorizontalAlignment="Stretch" IsEditable="True" >
+                <TextBlock x:Uid="InquiryDefaultName1" Text="User ID"/>
+                <TextBlock x:Uid="InquiryDefaultName2" Text="Password"/>
+                <TextBlock x:Uid="InquiryDefaultName3" Text="URL"/>
+            </ComboBox>
+        </Grid>
+        <Grid VerticalAlignment="Top" Margin="0,40,0,0">
+            <TextBlock x:Uid="InquiryItemValueTitle" HorizontalAlignment="Left" Margin="0,0,0,0" Text="Value" VerticalAlignment="center" Width="69"/>
+            <TextBox Name="InquiryItemValue" Margin="89,0,5,0" Text="" VerticalAlignment="Center" />
+        </Grid>
+        <Grid VerticalAlignment="Top" Margin="0,80,10,0">
+            <Button x:Uid="PassGenerateButton" Name="PassGenerateButton" Content="Generate Password" VerticalAlignment="Top" Width="153" Height="33" Click="PassGenerateButton_Click"/>
+            <Grid VerticalAlignment="Top" Margin="20,50,0,0">
+                <TextBlock x:Uid="PasswordDigitTitle" HorizontalAlignment="Left" Margin="0,0,0,0" Text="Digits" VerticalAlignment="center" Width="69"/>
+                <ComboBox Name="PasswordDigit" Margin="89,0,0,0" Text="" VerticalAlignment="Center" IsEditable="True" Width="94" >
+                    <TextBlock Text="6"/>
+                    <TextBlock Text="8"/>
+                    <TextBlock Text="10"/>
+                    <TextBlock Text="16"/>
+                    <TextBlock Text="32"/>
+                </ComboBox>
+            </Grid>
+            <CheckBox x:Uid="PassLowerCaseCheck" Name="PassLowerCaseCheck" Content="Lowercase" Width="95" Margin="20,90,0,0" VerticalAlignment="Top" />
+            <CheckBox x:Uid="PassUpperCaseCheck" Name="PassUpperCaseCheck" Content="Uppercase" Width="95" Margin="145,90,0,0" VerticalAlignment="Top" />
+            <CheckBox x:Uid="PassNumberCheck" Name="PassNumberCheck" Content="Numerics" Width="95" Margin="270,90,0,0" VerticalAlignment="Top" />
+            <CheckBox x:Uid="PassSymbolCheck" Name="PassSymbolCheck" Content="Symbols" Width="70" Margin="20,122,0,0" VerticalAlignment="Top" />
+            <TextBox Name="PassSymbolCandidate" Text="!$%'()*,/;=&gt;?[]{}" Margin="145,122,0,0" Height="32" VerticalAlignment="Top" IsEnabled="{Binding ElementName=PassSymbolCheck,Path=IsChecked, Mode=TwoWay}"/>
+            <CheckBox x:Uid="PassExcludeConfuseCheck" Name="PassExcludeConfuseCheck" Content="Exclude confusing characters" Width="235" Margin="20,154,0,0" VerticalAlignment="Top" />
+        </Grid>
+
+    </Grid>
+</ContentDialog>

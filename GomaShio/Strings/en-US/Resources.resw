@@ -1,0 +1,300 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AccountTitleText.Text" xml:space="preserve">
+    <value>Account</value>
+  </data>
+  <data name="AddAccountButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Add an account</value>
+  </data>
+  <data name="AddInquiryButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Add an Item</value>
+  </data>
+  <data name="AppMessageBoxTitle" xml:space="preserve">
+    <value>GomaShio</value>
+  </data>
+  <data name="CopyAccountButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Duplicate selected account</value>
+  </data>
+  <data name="CopyInquiryButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Duplicate selected item</value>
+  </data>
+  <data name="CreateNewDescription.Text" xml:space="preserve">
+    <value>Create a new password file. If you specify an existing file, all file contents are deleted.</value>
+  </data>
+  <data name="CreateNewPasswordFileButton.Content" xml:space="preserve">
+    <value>Create new</value>
+  </data>
+  <data name="DefaultPasswordDigits" xml:space="preserve">
+    <value>8</value>
+  </data>
+  <data name="DefaultSymbolCandidateString" xml:space="preserve">
+    <value>!$%'()*,/;=&gt;?[]{}</value>
+  </data>
+  <data name="DeleteAccountButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Delete selected account</value>
+  </data>
+  <data name="DeleteInquiryButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Delete selected item</value>
+  </data>
+  <data name="EditEnableToggle.OffContent" xml:space="preserve">
+    <value>Read only</value>
+  </data>
+  <data name="EditEnableToggle.OnContent" xml:space="preserve">
+    <value>Ediable</value>
+  </data>
+  <data name="EditInquiryDialog.PrimaryButtonText" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="EditInquiryDialog.SecondaryButtonText" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="EditInquiryDialog.Title" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="ExportPasswordFileButton.Content" xml:space="preserve">
+    <value>Export</value>
+  </data>
+  <data name="ExportPasswordFileDescription.Text" xml:space="preserve">
+    <value>Output registered IDs/Passwords to a plain text file.</value>
+  </data>
+  <data name="FileSettingsPageTitleText.Text" xml:space="preserve">
+    <value>Configure</value>
+  </data>
+  <data name="GomaShioFileTypeDescription" xml:space="preserve">
+    <value>GomaShio Password File</value>
+  </data>
+  <data name="ImportPasswordFileButton.Content" xml:space="preserve">
+    <value>Import</value>
+  </data>
+  <data name="ImportPasswordFileDescription.Text" xml:space="preserve">
+    <value>Import IDs/Passwords from exported plain text file. Current registered IDs/Passwords are all cleared.</value>
+  </data>
+  <data name="InquiryDefaultName1.Text" xml:space="preserve">
+    <value>User ID</value>
+  </data>
+  <data name="InquiryDefaultName2.Text" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="InquiryDefaultName3.Text" xml:space="preserve">
+    <value>URL</value>
+  </data>
+  <data name="InquiryItemNameTitle.Text" xml:space="preserve">
+    <value>Item name</value>
+  </data>
+  <data name="InquiryItemValueTitle.Text" xml:space="preserve">
+    <value>Item value</value>
+  </data>
+  <data name="MainPageAccountListRadio.Content" xml:space="preserve">
+    <value>Account list</value>
+  </data>
+  <data name="MainPageConfiguRadio.Content" xml:space="preserve">
+    <value>Configure</value>
+  </data>
+  <data name="MSG_BUCKUP_FILE_NOT_EXIST" xml:space="preserve">
+    <value>There are no backup files.</value>
+  </data>
+  <data name="MSG_FAILED_CREATE_NEW_FILE" xml:space="preserve">
+    <value>It failed to create new password file, please fix cause of any error.</value>
+  </data>
+  <data name="MSG_FAILED_LOAD_PASSWORD_FILE" xml:space="preserve">
+    <value>It failed to load password file.</value>
+  </data>
+  <data name="MSG_INITIAL_USE_MSG" xml:space="preserve">
+    <value>Please specify a saving file name and a master password.</value>
+  </data>
+  <data name="NewPassDSavePasswordCheck.Content" xml:space="preserve">
+    <value>Save password</value>
+  </data>
+  <data name="PassExcludeConfuseCheck.Content" xml:space="preserve">
+    <value>Exclude confusing characters</value>
+  </data>
+  <data name="PassGenerateButton.Content" xml:space="preserve">
+    <value>Generate Password</value>
+  </data>
+  <data name="PassLowerCaseCheck.Content" xml:space="preserve">
+    <value>Lowercase</value>
+  </data>
+  <data name="PassNumberCheck.Content" xml:space="preserve">
+    <value>Numerics</value>
+  </data>
+  <data name="PassSymbolCheck.Content" xml:space="preserve">
+    <value>Symbols</value>
+  </data>
+  <data name="PassUpperCaseCheck.Content" xml:space="preserve">
+    <value>Uppercase</value>
+  </data>
+  <data name="PasswordDialog.PrimaryButtonText" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="PasswordDialog.SecondaryButtonText" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="PasswordDigitTitle.Text" xml:space="preserve">
+    <value>Digits</value>
+  </data>
+  <data name="PasswordErrorText.Text" xml:space="preserve">
+    <value>Password unmatch</value>
+  </data>
+  <data name="PasswordText1Title.Text" xml:space="preserve">
+    <value>Enter password string</value>
+  </data>
+  <data name="PasswordText2Title.Text" xml:space="preserve">
+    <value>Confirm</value>
+  </data>
+  <data name="RecoveryBackupDialog.PrimaryButtonText" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="RecoveryBackupDialog.Title" xml:space="preserve">
+    <value>Recovery From Backups</value>
+  </data>
+  <data name="RecoveryBackupGetButton.Content" xml:space="preserve">
+    <value>Get</value>
+  </data>
+  <data name="RecoveryFromBackupButton.Content" xml:space="preserve">
+    <value>Recovery</value>
+  </data>
+  <data name="RecoveryFromBackupDescription.Text" xml:space="preserve">
+    <value>Recovery old password file from backups.</value>
+  </data>
+  <data name="SavePasswordCheck.Content" xml:space="preserve">
+    <value>Save password</value>
+  </data>
+  <data name="SelectedFileNameTitle.Text" xml:space="preserve">
+    <value>Selected File Name</value>
+  </data>
+  <data name="SelectExistingDescription.Text" xml:space="preserve">
+    <value>Set up to use a existing password file.</value>
+  </data>
+  <data name="SelectExistingPasswordFileButton.Content" xml:space="preserve">
+    <value>Use Existing File</value>
+  </data>
+  <data name="SetNewPassDialog.PrimaryButtonText" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="SetNewPassDialog.SecondaryButtonText" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="SetNewPassDialog.Title" xml:space="preserve">
+    <value>Set new password</value>
+  </data>
+  <data name="TextFileTypeDescription" xml:space="preserve">
+    <value>Text file</value>
+  </data>
+</root>
