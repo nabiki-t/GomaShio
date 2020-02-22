@@ -97,6 +97,7 @@ namespace GomaShio
             CreateNewPasswordFileButton.IsEnabled = true;
             ExportPasswordFileButton.IsEnabled = !string.IsNullOrEmpty( ftoken );
             ImportPasswordFileButton.IsEnabled = !string.IsNullOrEmpty( ftoken );
+            RecoveryFromBackupButton.IsEnabled = !string.IsNullOrEmpty( ftoken );
 
             if ( ApplicationData.Current.LocalSettings.Values.ContainsKey( "FileName" ) )
                 SelectedFileNameTextBox.Text = (String)ApplicationData.Current.LocalSettings.Values[ "FileName" ];
@@ -247,6 +248,15 @@ namespace GomaShio
         {
             _ = sender;
             _ = e;
+
+            // If password file is not selected, ignore this operation
+            string ftoken = "";
+            if ( ApplicationData.Current.LocalSettings.Values.ContainsKey( "FileToken" ) )
+                ftoken = (string)ApplicationData.Current.LocalSettings.Values[ "FileToken" ];
+            if ( string.IsNullOrEmpty( ftoken ) )
+                return ;
+
+            // Show recovery dialog
             await ( new RecoveryBackupDialog() ).ShowAsync();
         }
     }

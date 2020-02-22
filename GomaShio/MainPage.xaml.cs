@@ -1,5 +1,4 @@
 ﻿using System;
-using Windows.ApplicationModel.Resources;
 using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;

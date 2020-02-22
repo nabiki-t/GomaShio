@@ -528,28 +528,21 @@ namespace GomaShio
             if ( !m_EnableEdit ) return ;
 
             // If Account list item is not selected, ignore this event
-            if ( m_SelectedAccount < 0 )
+            if ( m_SelectedAccount < 0 || m_SelectedAccount >= m_PasswordFile.GetCount() )
                 return ;
 
-            int si = InquiryList.SelectedIndex;
-            if ( si < 0 ) si = 0;
+            int idx = m_PasswordFile.GetAccountInfo( m_SelectedAccount ).GetInquiryCount();
 
             // Get new inquiry info
             AccountInfo ai = m_PasswordFile.GetAccountInfo( m_SelectedAccount );
             EditInquiry d = new EditInquiry();
-            if ( si >= 0 && si < ai.GetInquiryCount() ) {
-                d.ItemName = ai.GetInquiryName( si );
-                d.ItemValue = ai.GetInquiryValue( si );
-            }
-            else {
-                d.ItemName = "";
-                d.ItemValue = "";
-            }
+            d.ItemName = "";
+            d.ItemValue = "";
             await d.ShowAsync();
             if ( d.IsOK ) {
-                ai.InsertInquiry( si, d.ItemName, d.ItemValue );
+                ai.InsertInquiry( idx, d.ItemName, d.ItemValue );
                 UpdateInquiryList( m_SelectedAccount );
-                InquiryList.SelectedIndex = si;
+                InquiryList.SelectedIndex = idx;
             }
         }
 
@@ -566,7 +559,7 @@ namespace GomaShio
             if ( !m_EnableEdit ) return ;
 
             // If Account list item is not selected, ignore this event
-            if ( m_SelectedAccount < 0 ) return ;
+            if ( m_SelectedAccount < 0 || m_SelectedAccount >= m_PasswordFile.GetCount() ) return ;
 
             // If Inquiry list item is not selected, ignore this event
             int si = InquiryList.SelectedIndex;
@@ -593,7 +586,7 @@ namespace GomaShio
             if ( !m_EnableEdit ) return ;
 
             // If Account list item is not selected, ignore this event
-            if ( m_SelectedAccount < 0 ) return ;
+            if ( m_SelectedAccount < 0 || m_SelectedAccount >= m_PasswordFile.GetCount() ) return ;
 
             // If Inquiry list item is not selected, ignore this event
             int si = InquiryList.SelectedIndex;
@@ -617,7 +610,7 @@ namespace GomaShio
                 return ;
 
             // If Account list item is not selected, ignore this event
-            if ( m_SelectedAccount < 0 )
+            if ( m_SelectedAccount < 0 || m_SelectedAccount >= m_PasswordFile.GetCount() )
                 return ;
 
             AccountInfo ai = m_PasswordFile.GetAccountInfo( m_SelectedAccount );
@@ -641,7 +634,7 @@ namespace GomaShio
             if ( !m_EnableEdit ) return ;
 
             // If Account list item is not selected, ignore this event
-            if ( m_SelectedAccount < 0 ) return ;
+            if ( m_SelectedAccount < 0 || m_SelectedAccount >= m_PasswordFile.GetCount() ) return ;
 
             AccountInfo ai = m_PasswordFile.GetAccountInfo( m_SelectedAccount );
 
@@ -693,7 +686,7 @@ namespace GomaShio
                 return ;
 
             // If Account list item is not selected, ignore this event
-            if ( m_SelectedAccount < 0 )
+            if ( m_SelectedAccount < 0 || m_SelectedAccount >= m_PasswordFile.GetCount() )
                 return ;
 
             m_PasswordFile.GetAccountInfo( m_SelectedAccount ).AccountName = AccountNameText.Text;
@@ -831,6 +824,15 @@ namespace GomaShio
         {
             _ = sender;
             _ = e;
+
+            if ( null == m_PasswordFile ) {
+                // If password file if not loaded, set to readonly mode
+                if ( EditEnableToggle.IsOn ) {
+                    EditEnableToggle.IsOn = false;
+                    SetEdiableState( false );
+                }
+                return ;
+            }
 
             SetEdiableState( EditEnableToggle.IsOn );
 
