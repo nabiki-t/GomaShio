@@ -1,13 +1,18 @@
 ﻿using System;
 using System.Linq;
 using System.Text;
+using System.Security;
 using Windows.Security.Cryptography;
 using Windows.Security.Cryptography.Core;
 using Windows.Storage.Streams;
+using System.Runtime.InteropServices; 
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Runtime.CompilerServices;
 
 namespace GomaShio
 {
+
+
     internal static class Crypt
     {
         private static int HASH_ITER_COUNT = 8192;
@@ -53,12 +58,8 @@ namespace GomaShio
 
             // Encrypt the data
             IBuffer iv3 = CryptographicBuffer.GenerateRandom( objAlg.BlockLength );
-            IBuffer encryptData =
-                CryptographicEngine.Encrypt(
-                    objAlg.CreateSymmetricKey( oneTimePass ),
-                    CryptographicBuffer.ConvertStringToBinary( plainText, BinaryStringEncoding.Utf8 ),
-                    iv3
-            );
+            IBuffer dataBuffer = CryptographicBuffer.ConvertStringToBinary( plainText, BinaryStringEncoding.Utf8 );
+            IBuffer encryptData = CryptographicEngine.Encrypt( objAlg.CreateSymmetricKey( oneTimePass ), dataBuffer, iv3 );
 
             // Append all of data
             byte[] retval =
@@ -195,15 +196,13 @@ namespace GomaShio
             IBuffer plainOneTimePass = CryptographicEngine.Decrypt( derviedKey, oneTimePass.AsBuffer(), iv2.AsBuffer() );
 
             // Decrypt the data
-            plainText =
-                CryptographicBuffer.ConvertBinaryToString(
-                    BinaryStringEncoding.Utf8,
-                    CryptographicEngine.Decrypt(
-                        objAlg.CreateSymmetricKey( plainOneTimePass ),
-                        encDataSub.AsBuffer(),
-                        iv3.AsBuffer()
-                    )
+            IBuffer decriptIBuffer =
+                CryptographicEngine.Decrypt(
+                    objAlg.CreateSymmetricKey( plainOneTimePass ),
+                    encDataSub.AsBuffer(),
+                    iv3.AsBuffer()
                 );
+            plainText = CryptographicBuffer.ConvertBinaryToString( BinaryStringEncoding.Utf8, decriptIBuffer );
 
             return true;
         }

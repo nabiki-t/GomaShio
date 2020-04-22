@@ -180,6 +180,9 @@
   <data name="GomaShioFileTypeDescription" xml:space="preserve">
     <value>GomaShio Password File</value>
   </data>
+  <data name="HideItemValueCheck" xml:space="preserve">
+    <value>Hide Item Value</value>
+  </data>
   <data name="ImportPasswordFileButton.Content" xml:space="preserve">
     <value>Import</value>
   </data>
@@ -257,6 +260,9 @@
   </data>
   <data name="PasswordText2Title.Text" xml:space="preserve">
     <value>Confirm</value>
+  </data>
+  <data name="PASS_HIDDEN_STRING" xml:space="preserve">
+    <value>******</value>
   </data>
   <data name="RecoveryBackupDialog.PrimaryButtonText" xml:space="preserve">
     <value>Close</value>

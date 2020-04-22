@@ -14,12 +14,14 @@ namespace GomaShio
         public string ItemName { get; set; }
         public string ItemValue { get; set; }
         public bool IsOK { get; set; }
+        public bool HideItemValue { get; set; }
 
         public EditInquiry()
         {
             ItemName = "";
             ItemValue = "";
             IsOK = false;
+            HideItemValue = true;
             this.InitializeComponent();
         }
 
@@ -28,12 +30,14 @@ namespace GomaShio
             _ = sender;
             _ = e;
 
+            // Set values before editing to controls.
             if ( null == ItemName )
                 ItemName = "";
             if ( null == ItemValue )
                 ItemValue = "";
             InquiryItemName.Text = ItemName;
             InquiryItemValue.Text = ItemValue;
+            HideItemValueCheck.IsChecked = HideItemValue;
             IsOK = false;
 
             // Restore password configuration
@@ -71,8 +75,11 @@ namespace GomaShio
         {
             _ = sender;
             _ = args;
+
+            // Get values after editing from the controls.
             ItemName = InquiryItemName.Text;
             ItemValue = InquiryItemValue.Text;
+            HideItemValue = HideItemValueCheck.IsChecked.GetValueOrDefault( false );
             IsOK = true;
 
             // ApplicationData.Current.LocalSettings.Values.ContainsKey( "FileName" )

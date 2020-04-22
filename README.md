@@ -40,7 +40,7 @@ Please download on Microsoft Store.
 
 Right click GomaShio icon on start menu and select Uninstall menu item, and delete all of *.GomaShio file you created manually.
 
-![Select Uninstall Menu](#readme_image/Uninstall.png)
+![Select Uninstall Menu](readme_image/Uninstall.png)
 
 Please export registerd account information to plain text file before deleting this software to protect your accounts.
 
@@ -50,63 +50,63 @@ Please export registerd account information to plain text file before deleting t
 
 If you start GomaShio on initialy, it shows following message. Click OK button, and close this message.
 
-![Initial Message](#readme_image/Usage_001.png)
+![Initial Message](readme_image/Usage_001.png)
 
 Click [Create new] button.
 
-![Initial Message](#readme_image/Usage_002.png)
+![Initial Message](readme_image/Usage_002.png)
 
 Enter master password and click [OK] button. Please specify hard password following image is example only. And do not forget this password.
 
-![Initial Message](#readme_image/Usage_003.png)
+![Initial Message](readme_image/Usage_003.png)
 
 Specify file name and click [Save] button.
 
-![Initial Message](#readme_image/Usage_004.png)
+![Initial Message](readme_image/Usage_004.png)
 
 Click Account list icon.
 
-![Initial Message](#readme_image/Usage_005.png)
+![Initial Message](readme_image/Usage_005.png)
 
 ### Account registoration
 
 If left-top toggle switch shows [Read only], click this and turn to [Editable].
 
-![Initial Message](#readme_image/Usage_006.png)
+![Initial Message](readme_image/Usage_006.png)
 
 Click left side plus button and add new account.
 
-![Initial Message](#readme_image/Usage_007.png)
+![Initial Message](readme_image/Usage_007.png)
 
 Edit account name and click right side plus button.
 
-![Initial Message](#readme_image/Usage_008.png)
+![Initial Message](readme_image/Usage_008.png)
 
 Enter item name and value, in this time, specify user name of your account. And click [OK] button.
 
-![Initial Message](#readme_image/Usage_009.png)
+![Initial Message](readme_image/Usage_009.png)
 
 Likewise, click right side plus button to add new item.
 
-![Initial Message](#readme_image/Usage_010.png)
+![Initial Message](readme_image/Usage_010.png)
 
 Enter item name and click [Generate Password] button. Random password string is set in [Item value] box. Afterwards click [OK] button.
 
-![Initial Message](#readme_image/Usage_011.png)
+![Initial Message](readme_image/Usage_011.png)
 
 Click left-top toggle switch and turn to [Read only], thereby registered account information are saved to the file.
 
-![Initial Message](#readme_image/Usage_012.png)
+![Initial Message](readme_image/Usage_012.png)
 
 ### Account reference
 
 If you try to log-in your account, click clipbord button on right list to copy item value to the clipbord. In following example, string "nabiki_t" is copied.
 
-![Initial Message](#readme_image/Usage_013.png)
+![Initial Message](readme_image/Usage_013.png)
 
 Paste string to some log-in window.
 
-![Initial Message](#readme_image/Usage_014.png)
+![Initial Message](readme_image/Usage_014.png)
 
 ## License
 

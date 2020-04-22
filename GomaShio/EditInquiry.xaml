@@ -16,7 +16,7 @@
     <Grid Margin="0,0,0,0" Width="450">
         <Grid VerticalAlignment="Top">
             <TextBlock x:Uid="InquiryItemNameTitle" HorizontalAlignment="Left" Margin="0,0,0,0" Text="Item Name" VerticalAlignment="center" Width="69"/>
-            <ComboBox Name="InquiryItemName" Margin="89,0,5,0" Text="" VerticalAlignment="Center" HorizontalAlignment="Stretch" IsEditable="True" >
+            <ComboBox Name="InquiryItemName" Margin="90,0,5,0" Text="" VerticalAlignment="Center" HorizontalAlignment="Stretch" IsEditable="True" >
                 <TextBlock x:Uid="InquiryDefaultName1" Text="User ID"/>
                 <TextBlock x:Uid="InquiryDefaultName2" Text="Password"/>
                 <TextBlock x:Uid="InquiryDefaultName3" Text="URL"/>
@@ -24,10 +24,14 @@
         </Grid>
         <Grid VerticalAlignment="Top" Margin="0,40,0,0">
             <TextBlock x:Uid="InquiryItemValueTitle" HorizontalAlignment="Left" Margin="0,0,0,0" Text="Value" VerticalAlignment="center" Width="69"/>
-            <TextBox Name="InquiryItemValue" Margin="89,0,5,0" Text="" VerticalAlignment="Center" />
+            <TextBox Name="InquiryItemValue" Margin="90,0,5,0" Text="" VerticalAlignment="Center" />
         </Grid>
-        <Grid VerticalAlignment="Top" Margin="0,80,10,0">
+        <Grid VerticalAlignment="Top" Margin="0,80,0,0">
+            <CheckBox x:Uid="HideItemValueCheck" Name="HideItemValueCheck" Content="Hide item value" Width="350" Margin="90,0,0,0" />
+        </Grid>
+        <Grid VerticalAlignment="Top" Margin="0,120,10,0">
             <Button x:Uid="PassGenerateButton" Name="PassGenerateButton" Content="Generate Password" VerticalAlignment="Top" Width="153" Height="33" Click="PassGenerateButton_Click"/>
+
             <Grid VerticalAlignment="Top" Margin="20,50,0,0">
                 <TextBlock x:Uid="PasswordDigitTitle" HorizontalAlignment="Left" Margin="0,0,0,0" Text="Digits" VerticalAlignment="center" Width="69"/>
                 <ComboBox Name="PasswordDigit" Margin="89,0,0,0" Text="" VerticalAlignment="Center" IsEditable="True" Width="94" >

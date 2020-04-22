@@ -1,14 +1,13 @@
 ﻿using Windows.Storage;
-using Windows.Storage.AccessCache;
 using Windows.Storage.Streams;
 using System.Threading.Tasks;
 using System;
 using System.Text.RegularExpressions;
 using System.Text;
 using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Security;
 
 namespace GomaShio
 {
@@ -188,54 +187,118 @@ namespace GomaShio
         // Recognize text string to account info
         public Tuple< AccountInfo[], int > Recognize( string str )
         {
+            CultureInfo ci = new System.Globalization.CultureInfo( "en-US" );
             AccountInfo[] retval = new AccountInfo[16];
             int AccInfoCnt = 0;
-            int curAccInfo = -1;
-            Regex regSection = new Regex( @"^ *\[(.*)\] *$" );
-            Regex regKeyVal = new Regex( @"^(([^=]|\\=)*)=(([^=]|\\=)*)$" );
+            Regex regSection = new Regex( @"^ *\[([^]]*)\] *$" );
+            Regex regKeyVal = new Regex( @"^ *([^=]*)=(.*)$" );
             Regex regComment = new Regex( @"^ *;.*$" );
-            Regex regEscapeEqual = new Regex( @"\\=" );
+
+            // Divite single string to lines by \n
             string [] lines = str.Split( '\n' );
 
+            Dictionary< string, Dictionary< string, string > > divValue = new Dictionary< string, Dictionary< string, string > >();
+            Dictionary< string, string > currentSection = null;
+
+            // Devite lines into sections and key-values
             for ( int i = 0; i < lines.Length; i++ ) {
                 // Skip comment line
-                if ( regComment.IsMatch( lines[i] ) )
+                if ( lines[i].Length == 0 || regComment.IsMatch( lines[i] ) )
                     continue;
 
-                // If section name is specified, add a new AccountInfo object
+                // If section name is specified, add a new section object
                 Match resSection = regSection.Match( lines[i] );
                 if ( resSection.Success ) {
-                    if ( retval.Length <= AccInfoCnt ) {
-                        Array.Resize( ref retval, retval.Length * 2 );
+                    if ( !divValue.ContainsKey( resSection.Groups[1].Value ) ) {
+                        // Add new section
+                        currentSection = new Dictionary< string, string >();
+                        divValue.Add( resSection.Groups[1].Value, currentSection );
                     }
-                    curAccInfo = AccInfoCnt;
-                    AccInfoCnt++;
-                    retval[curAccInfo] = new AccountInfo( this );
-                    retval[curAccInfo].AccountName = resSection.Groups[1].Value;
+                    else {
+                        // If section name is duplicated, ignore this section
+                        currentSection = null;
+                    }
                     continue;
                 }
 
-                // If key-value line is specified, add a new inquiry info to current AccountInfo object;
-                if ( curAccInfo < 0 ) continue;
+                // If section is not specified, ignore lines other than section name.
+                if ( null == currentSection ) continue;
+
+                // If key-value line is specified, add a new key-value info to current section dictionary object
                 Match resInquiry = regKeyVal.Match( lines[i] );
                 if ( resInquiry.Success ) {
-                    retval[curAccInfo].InsertInquiry(
-                        retval[curAccInfo].GetInquiryCount(),
-                        regEscapeEqual.Replace( resInquiry.Groups[1].Value, "=" ),
-                        regEscapeEqual.Replace( resInquiry.Groups[3].Value, "=" )
-                    );
+                    if ( !currentSection.ContainsKey( resInquiry.Groups[1].Value ) ) {
+                        currentSection.Add( resInquiry.Groups[1].Value, resInquiry.Groups[2].Value );
+                    }
+                    else {
+                        // If key name is duplicated, ignore this key-value
+                    }
+                    continue;
                 }
+
+                // ignore any other lines
             }
-            return new Tuple<AccountInfo[], int>( retval, AccInfoCnt );
+
+            // Get Account count
+            if ( divValue.ContainsKey( "General" ) ) {
+                currentSection = divValue.GetValueOrDefault( "General", null );
+                if ( !Int32.TryParse( currentSection.GetValueOrDefault( "AccountCount", "0" ), out AccInfoCnt ) )
+                    AccInfoCnt = 0;
+            }
+            if ( AccInfoCnt < 0 ) AccInfoCnt = 0;
+
+            int curAccInfo = 0;
+            retval = new AccountInfo[ Math.Max( 16, AccInfoCnt ) ];
+            for ( int i = 0; i < AccInfoCnt; i++ ) {
+                string AccSecName = String.Format( ci, "Account_{0}", i );
+
+                currentSection = null;
+                if ( divValue.ContainsKey( AccSecName ) )
+                    currentSection = divValue.GetValueOrDefault( AccSecName, null );
+                if ( null == currentSection )
+                    continue;
+
+                // Get account name
+                string accountName = currentSection.GetValueOrDefault( "AccountName", null );
+                if ( null == accountName )
+                    continue;
+
+                // Get inquiry count
+                int inquiryCount = 0;
+                if ( !Int32.TryParse( currentSection.GetValueOrDefault( "InquiryCount", "-1" ), out inquiryCount ) )
+                    inquiryCount = -1;
+                if ( inquiryCount < 0 )
+                    continue;
+
+                // Create AccountInfo object and load inquiry names and values
+                retval[curAccInfo] = new AccountInfo( this );
+                retval[curAccInfo].AccountName = accountName;
+                for ( int j = 0; j < inquiryCount; j++ ) {
+                    string inquiryName = currentSection.GetValueOrDefault( String.Format( ci, "InquiryName_{0}", j ), null );
+                    string inquiryValue = currentSection.GetValueOrDefault( String.Format( ci, "InquiryValue_{0}", j ), null );
+                    string hideFlagStr = currentSection.GetValueOrDefault( String.Format( ci, "HideFlag_{0}", j ), null );
+                    if ( null == inquiryName || null == inquiryValue || null == hideFlagStr )
+                        continue;
+                    bool hideFlag = String.Compare( hideFlagStr, "True", true, ci ) == 0;
+                    retval[curAccInfo].InsertInquiry( retval[curAccInfo].GetInquiryCount(), inquiryName, inquiryValue, hideFlag );
+                }
+                curAccInfo++;
+            }
+
+            return new Tuple<AccountInfo[], int>( retval, curAccInfo );
         }
 
         // Build string data for output file
         public string BuildStringForOutput()
         {
+            CultureInfo ci = new CultureInfo( "en-US" );
+
             StringBuilder sb = new StringBuilder();
-            sb.Append( "; GomaShio password file.\n" );
+            sb.Append( "; GomaShio password file. \n" );
+            sb.Append( "[General]\n" );
+            sb.AppendFormat( ci, "AccountCount={0}\n", m_Count );
             for ( int i = 0; i < m_Count; i++ ) {
-                sb.Append( m_AccountInfo[i].BuildStringForOutput() );
+                sb.Append( m_AccountInfo[i].BuildStringForOutput( i ) );
             }
             return sb.ToString();
         }

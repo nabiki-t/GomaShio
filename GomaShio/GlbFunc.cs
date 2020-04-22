@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Security;
 using Windows.ApplicationModel.Resources;
 using Windows.UI.Xaml.Controls;
+using System.Runtime.InteropServices; 
 
 namespace GomaShio
 {
@@ -49,6 +47,41 @@ namespace GomaShio
                 return defaultMsg;
             return result;
         }
+        /*
+        public static void AppendStringToSecureString( String src, ref SecureString dst )
+        {
+            foreach ( char c in src )
+                dst.AppendChar( c );
+        }
 
+        public static void AppendSecureString( SecureString src, ref SecureString dst )
+        {
+            unsafe {
+                IntPtr secBuf = Marshal.SecureStringToGlobalAllocUnicode( src );
+                char *pSecureString = (char*)secBuf;
+                for ( int i = 0; i < src.Length; i++ ) {
+                    dst.AppendChar( pSecureString[i] );
+                }
+                Marshal.ZeroFreeGlobalAllocUnicode( secBuf );
+            }
+        }
+
+        public static string SecureStringToString( SecureString src )
+        {
+            if ( null == src ) return null;
+            IntPtr pSecureString = Marshal.SecureStringToGlobalAllocUnicode( src );
+            string rstr = Marshal.PtrToStringUni( pSecureString );
+            Marshal.ZeroFreeGlobalAllocUnicode( pSecureString );
+            return rstr;
+        }
+
+        public static SecureString StringToSecureString( string str ) 
+        {
+            if ( null == str ) return null;
+            SecureString r = new SecureString();
+            foreach ( char c in str )
+                r.AppendChar( c );
+            return r;
+        }*/
     }
 }

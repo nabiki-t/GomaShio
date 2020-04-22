@@ -9,6 +9,7 @@ using Windows.Storage.AccessCache;
 using System.Threading.Tasks;
 using System.Text;
 using System.IO;
+using System.Security;
 
 namespace GomaShio
 {

@@ -20,12 +20,14 @@ namespace GomaShio
         string m_Password;
 
         TextBlock [] m_AccountList_ItemNames;
+        Border [] m_AccountList_Border;
         int m_AccountList_ItemCount;
 
         TextBlock [] m_InquiryList_ItemTitles;
         TextBlock [] m_InquiryList_ItemTexts;
         Button [] m_InquiryList_CopyButton;
         RoutedEventHandler [] m_InquiryList_CopyButton_Click;
+        Border [] m_InquiryList_Border;
 
         int m_InquiryList_ItemCount;
         int m_SelectedAccount;
@@ -36,11 +38,13 @@ namespace GomaShio
         public PasswordListPage()
         {
             m_AccountList_ItemNames = new TextBlock[16];
+            m_AccountList_Border = new Border[16];
             m_AccountList_ItemCount = 0;
             m_InquiryList_ItemTitles = new TextBlock[16];
             m_InquiryList_ItemTexts = new TextBlock[16];
             m_InquiryList_CopyButton = new Button[16];
             m_InquiryList_CopyButton_Click = new RoutedEventHandler[16];
+            m_InquiryList_Border = new Border[16];
             m_InquiryList_ItemCount = 0;
             m_SelectedAccount = -1;
             m_AccountNameTextUpdateFlg = false;
@@ -82,8 +86,6 @@ namespace GomaShio
             else {
                 UpdateInquiryList( -1 );
             }
-
-            // SetEdiableState(  );
 
             Application.Current.Suspending += new SuspendingEventHandler(App_Suspending);
 
@@ -149,10 +151,13 @@ namespace GomaShio
 
             if ( m_AccountList_ItemNames.Length <= accountCnt )
                  Array.Resize( ref m_AccountList_ItemNames, Math.Max( m_AccountList_ItemNames.Length * 2, accountCnt + 1 ) );
+            if ( m_AccountList_Border.Length <= accountCnt )
+                 Array.Resize( ref m_AccountList_Border, Math.Max( m_AccountList_Border.Length * 2, accountCnt + 1 ) );
 
             for ( int i = 0; i < m_AccountList_ItemCount && i < accountCnt; i++ ) {
                 // update Inquiry Title and inquily text in existing control
                 m_AccountList_ItemNames[i].Text = m_PasswordFile.GetAccountInfo( i ).AccountName;
+                m_AccountList_Border[i].Background = new SolidColorBrush( CalcBorderColor( accountCnt, i, EditEnableToggle.IsOn ) );
             }
 
             if ( m_AccountList_ItemCount < accountCnt ) {
@@ -161,7 +166,7 @@ namespace GomaShio
                 System.Globalization.CultureInfo ci = new System.Globalization.CultureInfo( "en-US" );
                 for ( int i = m_AccountList_ItemCount; i < accountCnt; i++ ) {
                     Grid itemGrid = new Grid {
-                        Height = 40,
+                        Height = 30,
                         Margin = new Thickness( 0, 3, 3, 3 ),
                         Name = i.ToString( ci )
                     };
@@ -175,9 +180,9 @@ namespace GomaShio
                     };
                     itemGrid.Children.Add( m_AccountList_ItemNames[i] );
                     Grid.SetColumn( m_AccountList_ItemNames[i], 1 );
-                    Border border = new Border{ Background = new SolidColorBrush( Windows.UI.Color.FromArgb( 255, 128, 128, 255 ) ) };
-                    itemGrid.Children.Add( border );
-                    Grid.SetColumn( border, 0 );
+                    m_AccountList_Border[i] = new Border{ Background = new SolidColorBrush( CalcBorderColor( accountCnt, i, EditEnableToggle.IsOn ) ) };
+                    itemGrid.Children.Add( m_AccountList_Border[i] );
+                    Grid.SetColumn( m_AccountList_Border[i], 0 );
                     AccountList.Items.Add( itemGrid );
                 }
             }
@@ -185,14 +190,41 @@ namespace GomaShio
                 // Remove excessive list items.
                 for ( int i = m_AccountList_ItemCount - 1; i >= accountCnt; i-- ) {
                     m_AccountList_ItemNames[i] = null;
+                    m_AccountList_Border[i] = null;
                     AccountList.Items.RemoveAt( i );
                 }
             }
             m_AccountList_ItemCount = accountCnt;
         }
 
+        private static Windows.UI.Color CalcBorderColor( int count, int idx, bool isEdiable )
+        {
+            const int r_top = 128;
+            const int r_bottom = 128;
+            const int g_top = 92;
+            const int g_bottom = 224;
+            const int b_top = 255;
+            const int b_bottom = 92;
+
+            if ( isEdiable ) {
+                return Windows.UI.Color.FromArgb( 255, 255, 0, 0 );
+            }
+            if ( count <= 1 ) {
+                return Windows.UI.Color.FromArgb( 255, r_top, g_bottom, b_top );
+            }
+            else {
+                return Windows.UI.Color.FromArgb(
+                    255,
+                    (byte)( r_top + ( ( r_bottom - r_top ) / ( count - 1 ) ) * idx ),
+                    (byte)( g_top + ( ( g_bottom - g_top ) / ( count - 1 ) ) * idx ),
+                    (byte)( b_top + ( ( b_bottom - b_top ) / ( count - 1 ) ) * idx )
+                );
+            }
+        }
+
         private void UpdateInquiryList( int accountInfoIdx )
         {
+            string hiddenString = GlbFunc.GetResourceString( "PASS_HIDDEN_STRING", "******" );
             m_SelectedAccount = accountInfoIdx;
             if ( AccountList.Items.Count <= 0 || m_SelectedAccount < 0 ) {
                 // Clear all of controls in Account info pane.
@@ -209,6 +241,8 @@ namespace GomaShio
                     m_InquiryList_CopyButton[i] = null;
                 for ( int i = 0; i < m_InquiryList_CopyButton_Click.Length; i++ )
                     m_InquiryList_CopyButton_Click[i] = null;
+                for ( int i = 0; i < m_InquiryList_Border.Length; i++ )
+                    m_InquiryList_Border[i] = null;
                 m_InquiryList_ItemCount = 0;
             }
             else {
@@ -233,14 +267,22 @@ namespace GomaShio
                     Array.Resize( ref m_InquiryList_CopyButton, Math.Max( m_InquiryList_CopyButton.Length * 2, inquiryCount + 1 ) );
                 if ( inquiryCount >=  m_InquiryList_CopyButton_Click.Length )
                     Array.Resize( ref m_InquiryList_CopyButton_Click, Math.Max( m_InquiryList_CopyButton_Click.Length * 2, inquiryCount + 1 ) );
+                if ( inquiryCount >=  m_InquiryList_Border.Length )
+                    Array.Resize( ref m_InquiryList_Border, Math.Max( m_InquiryList_Border.Length * 2, inquiryCount + 1 ) );
 
                 for ( int i = 0; i < m_InquiryList_ItemCount && i < inquiryCount; i++ ) {
                     // update Inquiry Title and inquily text in existing control
                     m_InquiryList_ItemTitles[i].Text = ai.GetInquiryName( i );
-                    m_InquiryList_ItemTexts[i].Text = ai.GetInquiryValue( i );
+                    if ( !ai.GetHideFlag( i ) )
+                        m_InquiryList_ItemTexts[i].Text = ai.GetInquiryValue( i );
+                    else
+                        m_InquiryList_ItemTexts[i].Text = hiddenString;
+                    m_InquiryList_Border[i].Background = new SolidColorBrush( CalcBorderColor( m_AccountList_ItemCount, accountInfoIdx, EditEnableToggle.IsOn ) );
+
                 }
                 if ( m_InquiryList_ItemCount < inquiryCount ) {
                     System.Globalization.CultureInfo ci = new System.Globalization.CultureInfo( "en-US" );
+                    SolidColorBrush wBorderBrush = new SolidColorBrush( CalcBorderColor( m_AccountList_ItemCount, accountInfoIdx, EditEnableToggle.IsOn ) );
                     // add missing items to InquiryList
                     for ( int i = m_InquiryList_ItemCount; i < inquiryCount; i++ ) {
                         int copy_i = i;
@@ -281,17 +323,20 @@ namespace GomaShio
                         };
                         m_InquiryList_ItemTexts[i] = new TextBlock{
                                 Margin = new Thickness( 15, 3, 0, 3 ),
-                                Text = ai.GetInquiryValue( i ),
                                 FontSize = 20.0
                         };
+                        if ( !ai.GetHideFlag( i ) )
+                            m_InquiryList_ItemTexts[i].Text = ai.GetInquiryValue( i );
+                        else
+                            m_InquiryList_ItemTexts[i].Text = hiddenString;
                         spSub.Children.Add( m_InquiryList_ItemTitles[i] );
                         spSub.Children.Add( m_InquiryList_ItemTexts[i] );
                         sp.Children.Add( spSub );
                         Grid.SetColumn( sp, 1 );
                         g.Children.Add( sp );
-                        Border border = new Border{ Background = new SolidColorBrush( Windows.UI.Color.FromArgb( 255, 128, 128, 255 ) ) };
-                        Grid.SetColumn( border, 0 );
-                        g.Children.Add( border );
+                        m_InquiryList_Border[i] = new Border{ Background = wBorderBrush };
+                        Grid.SetColumn( m_InquiryList_Border[i], 0 );
+                        g.Children.Add( m_InquiryList_Border[i] );
                         InquiryList.Items.Add( g );
                     }
                 }
@@ -301,6 +346,7 @@ namespace GomaShio
                         m_InquiryList_ItemTitles[i] = null;
                         m_InquiryList_ItemTexts[i] = null;
                         m_InquiryList_CopyButton[i] = null;
+                        m_InquiryList_Border[i] = null;
                         InquiryList.Items.RemoveAt( i );
                     }
                 }
@@ -538,9 +584,10 @@ namespace GomaShio
             EditInquiry d = new EditInquiry();
             d.ItemName = "";
             d.ItemValue = "";
+            d.HideItemValue = false;
             await d.ShowAsync();
             if ( d.IsOK ) {
-                ai.InsertInquiry( idx, d.ItemName, d.ItemValue );
+                ai.InsertInquiry( idx, d.ItemName, d.ItemValue, d.HideItemValue );
                 UpdateInquiryList( m_SelectedAccount );
                 InquiryList.SelectedIndex = idx;
             }
@@ -594,7 +641,7 @@ namespace GomaShio
 
             // Copy selected inquiry item
             AccountInfo ai = m_PasswordFile.GetAccountInfo( m_SelectedAccount );
-            ai.InsertInquiry( si, ai.GetInquiryName( si ), ai.GetInquiryValue( si ) );
+            ai.InsertInquiry( si, ai.GetInquiryName( si ), ai.GetInquiryValue( si ), ai.GetHideFlag( si ) );
             UpdateInquiryList( m_SelectedAccount );
             InquiryList.SelectedIndex = si;
         }
@@ -642,9 +689,10 @@ namespace GomaShio
             EditInquiry d = new EditInquiry();
             d.ItemName = ai.GetInquiryName( idx );
             d.ItemValue = ai.GetInquiryValue( idx );
+            d.HideItemValue = ai.GetHideFlag( idx );
             await d.ShowAsync();
             if ( d.IsOK ) {
-                ai.SetInquiry( idx, d.ItemName, d.ItemValue );
+                ai.SetInquiry( idx, d.ItemName, d.ItemValue, d.HideItemValue );
                 m_InquiryList_ItemTitles[idx].Text = d.ItemName;
                 m_InquiryList_ItemTexts[idx].Text = d.ItemValue;
             }
@@ -740,11 +788,13 @@ namespace GomaShio
             TextBlock [] rvItemTitles = new TextBlock[ m_InquiryList_ItemTitles.Length ];
             TextBlock [] rvItemTexts = new TextBlock[ m_InquiryList_ItemTexts.Length ];
             Button [] rvCopyButton = new Button[ m_InquiryList_CopyButton.Length ];
+            Border [] rvBorder = new Border[ m_InquiryList_Border.Length ];
             System.Globalization.CultureInfo cinfo = new System.Globalization.CultureInfo( "en-US" );
             for ( int i = 0; i < itemCnt; i++ ) {
                 rvItemTitles[i] = m_InquiryList_ItemTitles[ vResult[i] ];
                 rvItemTexts[i] = m_InquiryList_ItemTexts[ vResult[i] ];
                 rvCopyButton[i] = m_InquiryList_CopyButton[ vResult[i] ];
+                rvBorder[i] = m_InquiryList_Border[ vResult[i] ];
                 m_InquiryList_CopyButton[i].Click -= m_InquiryList_CopyButton_Click[i];
 
                 Grid g = (Grid)InquiryList.Items[i];
@@ -753,6 +803,7 @@ namespace GomaShio
             m_InquiryList_ItemTitles = rvItemTitles;
             m_InquiryList_ItemTexts = rvItemTexts;
             m_InquiryList_CopyButton = rvCopyButton;
+            m_InquiryList_Border = rvBorder;
 
             // update copy and edit button event handler
             for ( int i = 0; i < InquiryList.Items.Count; i++ ) {
@@ -792,10 +843,17 @@ namespace GomaShio
             System.Globalization.CultureInfo cinfo = new System.Globalization.CultureInfo( "en-US" );
             for ( int i = 0; i < itemCnt; i++ ) {
                 rvAccountTitles[i] = m_AccountList_ItemNames[ vResult[i] ];
-                Grid g = (Grid)AccountList.Items[i];
+                Grid g = (Grid)AccountList.Items[i];    // reset grid control name;
                 g.Name = i.ToString( cinfo );
             }
             m_AccountList_ItemNames = rvAccountTitles;
+
+            // re-order Border control vector
+            Border [] rvAccountBorder = new Border[ m_AccountList_Border.Length ];
+            for ( int i = 0; i < itemCnt; i++ ) {
+                rvAccountBorder[i] = m_AccountList_Border[ vResult[i] ];
+            }
+            m_AccountList_Border = rvAccountBorder;
 
             UpdateInquiryList( AccountList.SelectedIndex );
         }
@@ -847,6 +905,7 @@ namespace GomaShio
             bool pwfLoaded = ( m_PasswordFile != null );
             bool isAccountSelected = pwfLoaded && ( AccountList.Items.Count > 0 || m_SelectedAccount >= 0 );
             bool isInquiryExist = false;
+            
             if ( isAccountSelected ) {
                 AccountInfo ai = m_PasswordFile.GetAccountInfo( m_SelectedAccount );
                 isInquiryExist = ai.GetInquiryCount() > 0;
@@ -871,6 +930,8 @@ namespace GomaShio
                 AddInquiryButton.Visibility = Visibility.Visible;
                 DeleteInquiryButton.Visibility = Visibility.Visible;
                 CopyInquiryButton.Visibility = Visibility.Visible;
+                AccountList.Margin = new Thickness( AccountList.Margin.Left, AccountList.Margin.Top, AccountList.Margin.Right, 55 );
+                InquiryList.Margin = new Thickness( InquiryList.Margin.Left, InquiryList.Margin.Top, InquiryList.Margin.Right, 55 );
             }
             else {
                 AddAccountButton.Visibility = Visibility.Collapsed;
@@ -879,6 +940,8 @@ namespace GomaShio
                 AddInquiryButton.Visibility = Visibility.Collapsed;
                 DeleteInquiryButton.Visibility = Visibility.Collapsed;
                 CopyInquiryButton.Visibility = Visibility.Collapsed;
+                AccountList.Margin = new Thickness( AccountList.Margin.Left, AccountList.Margin.Top, AccountList.Margin.Right, 10 );
+                InquiryList.Margin = new Thickness( InquiryList.Margin.Left, InquiryList.Margin.Top, InquiryList.Margin.Right, 10 );
             }
 
             AccountList.IsEnabled = true;
@@ -891,6 +954,14 @@ namespace GomaShio
             AddInquiryButton.IsEnabled = m_EnableEdit && isAccountSelected;
             DeleteInquiryButton.IsEnabled = m_EnableEdit && isInquirySelected;
             CopyInquiryButton.IsEnabled = m_EnableEdit && isInquirySelected;
+
+            for ( int i = 0; i < m_AccountList_ItemCount; i++ ) {
+                m_AccountList_Border[i].Background = new SolidColorBrush( CalcBorderColor( m_AccountList_ItemCount, i, f ) );
+            }
+            SolidColorBrush inquiryBorderBrush = new SolidColorBrush( CalcBorderColor( m_AccountList_ItemCount, m_SelectedAccount, f ) );
+            for ( int i = 0; i < m_InquiryList_ItemCount; i++ ) {
+                m_InquiryList_Border[i].Background = inquiryBorderBrush;
+            }
         }
     }
 }
