@@ -120,7 +120,7 @@ namespace GomaShio
             string plainData = "";
 
             // Decrypt read data.
-            if ( !Crypt.CipherDecryption( encriptedData, password, out plainData, out passwordError ) ) {
+            if ( !Crypt.CipherDecryption( encriptedData, password, out plainData, out passwordError, false ) ) {
                 if ( passwordError )
                     return 2;
                 else
@@ -128,7 +128,7 @@ namespace GomaShio
             }
 
             // Recognize loaded string to AoountInfo
-            var result = Recognize( plainData );
+            var result = Recognize( plainData, false );
             m_AccountInfo = result.Item1;
             m_Count = result.Item2;
 
@@ -154,7 +154,7 @@ namespace GomaShio
                 await oldBackups[i].DeleteAsync();
 
             // Build plain text data for output and encript that string.
-            byte[] encryptedData = Crypt.CipherEncryption( BuildStringForOutput(), password );
+            byte[] encryptedData = Crypt.CipherEncryption( BuildStringForOutput( false ), password, false );
 
             // Start to create a new backup file
             string backupFileName = DateTime.Now.ToString( "yyyy-MM-dd-hh-mm-ss-fff", CultureInfo.InvariantCulture ) + ".GomaShio";
@@ -178,16 +178,16 @@ namespace GomaShio
         {
             // Clear modified flag.
             m_Modified = false;
-            var r = Recognize( str );
+            var r = Recognize( str, true );
             m_AccountInfo = r.Item1;
             m_Count = r.Item2;
             return true;
         }
 
         // Recognize text string to account info
-        public Tuple< AccountInfo[], int > Recognize( string str )
+        public Tuple< AccountInfo[], int > Recognize( string str, bool importPlainFlag )
         {
-            CultureInfo ci = new System.Globalization.CultureInfo( "en-US" );
+            CultureInfo ci = new CultureInfo( "en-US" );
             AccountInfo[] retval = new AccountInfo[16];
             int AccInfoCnt = 0;
             Regex regSection = new Regex( @"^ *\[([^]]*)\] *$" );
@@ -280,7 +280,14 @@ namespace GomaShio
                     if ( null == inquiryName || null == inquiryValue || null == hideFlagStr )
                         continue;
                     bool hideFlag = String.Compare( hideFlagStr, "True", true, ci ) == 0;
-                    retval[curAccInfo].InsertInquiry( retval[curAccInfo].GetInquiryCount(), inquiryName, inquiryValue, hideFlag );
+                    if ( importPlainFlag ) {
+                        retval[curAccInfo].InsertInquiryFromPlainValue( retval[curAccInfo].GetInquiryCount(), inquiryName, inquiryValue, hideFlag );
+                    }
+                    else {
+                        string tempStr = currentSection.GetValueOrDefault( String.Format( ci, "TempStr_{0}", j ), null );
+                        if ( null == tempStr ) continue;
+                        retval[curAccInfo].InsertInquiryWithTempStr( retval[curAccInfo].GetInquiryCount(), inquiryName, inquiryValue, hideFlag, tempStr );
+                    }
                 }
                 curAccInfo++;
             }
@@ -289,16 +296,17 @@ namespace GomaShio
         }
 
         // Build string data for output file
-        public string BuildStringForOutput()
+        public string BuildStringForOutput( bool outputPlainFlg )
         {
             CultureInfo ci = new CultureInfo( "en-US" );
-
             StringBuilder sb = new StringBuilder();
-            sb.Append( "; GomaShio password file. \n" );
+            sb.AppendFormat( ci, "; GomaShio password file. {0}\n\n", DateTime.Now.ToString( ci ) );
             sb.Append( "[General]\n" );
-            sb.AppendFormat( ci, "AccountCount={0}\n", m_Count );
+            sb.AppendFormat( ci, "AccountCount={0}\n\n", m_Count );
             for ( int i = 0; i < m_Count; i++ ) {
-                sb.Append( m_AccountInfo[i].BuildStringForOutput( i ) );
+                if ( outputPlainFlg )
+                    sb.Append( "\n; ----------------------------------------------------\n" );
+                sb.Append( m_AccountInfo[i].BuildStringForOutput( i, outputPlainFlg ) );
             }
             return sb.ToString();
         }

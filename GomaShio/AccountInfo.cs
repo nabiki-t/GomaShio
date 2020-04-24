@@ -2,6 +2,7 @@
 using System.Text;
 using System.Security;
 using System.Globalization;
+using System.Linq;
 
 namespace GomaShio
 {
@@ -26,6 +27,7 @@ namespace GomaShio
         private string [] m_InquiryName;
         private string [] m_InquiryValue;
         private bool [] m_HideFlag;
+        private string [] m_obfusPass;
         int m_InquiryCount;
         private PasswordFile m_ParentPasswordFile;
 
@@ -35,6 +37,7 @@ namespace GomaShio
             m_InquiryName = new string[16];
             m_InquiryValue = new string[16];
             m_HideFlag = new bool[16];
+            m_obfusPass = new string[16];
             m_InquiryCount = 0;
             m_ParentPasswordFile = argPW;
         }
@@ -43,14 +46,15 @@ namespace GomaShio
         {
             m_AccountName = cpSrc.m_AccountName;
             m_InquiryName = new string[ cpSrc.m_InquiryName.Length ];
-            for ( int i = 0; i < m_InquiryName.Length; i++ )
-                m_InquiryName[i] = cpSrc.m_InquiryName[i];
             m_InquiryValue = new string[ cpSrc.m_InquiryValue.Length ];
-            for ( int i = 0; i < m_InquiryValue.Length; i++ )
-                m_InquiryValue[i] = cpSrc.m_InquiryValue[i];
             m_HideFlag = new bool[ cpSrc.m_HideFlag.Length ];
-            for ( int i = 0; i < m_HideFlag.Length; i++ )
-                m_HideFlag[i] = cpSrc.m_HideFlag[i];
+            m_obfusPass = new string[ cpSrc.m_obfusPass.Length ];
+
+            Array.Copy( cpSrc.m_InquiryName, m_InquiryName, cpSrc.m_InquiryName.Length );
+            Array.Copy( cpSrc.m_InquiryValue, m_InquiryValue, cpSrc.m_InquiryValue.Length );
+            Array.Copy( cpSrc.m_HideFlag, m_HideFlag, cpSrc.m_HideFlag.Length );
+            Array.Copy( cpSrc.m_obfusPass, m_obfusPass, cpSrc.m_obfusPass.Length );
+
             m_InquiryCount = cpSrc.m_InquiryCount;
             m_ParentPasswordFile = argPW;
         }
@@ -62,9 +66,13 @@ namespace GomaShio
 
         }
         public string GetInquiryValue( int idx ) {
+            string rstr;
+            bool err;
             if ( idx < 0 || idx >= m_InquiryCount )
                 return "";
-            return m_InquiryValue[ idx ];
+            if ( !Crypt.CipherDecryption( Crypt.Base64Decoding( m_InquiryValue[ idx ] ), m_obfusPass[ idx ], out rstr, out err, true ) )
+                return "";
+            return rstr;
         }
         public bool GetHideFlag( int idx ) {
             if ( idx < 0 || idx >= m_InquiryCount )
@@ -82,28 +90,60 @@ namespace GomaShio
             if ( name != m_InquiryName[ idx ] || value != m_InquiryValue[ idx ] || hideFlag != m_HideFlag[ idx ] )
                 m_ParentPasswordFile.SetModified();
             m_InquiryName[ idx ] = name;
-            m_InquiryValue[ idx ] = value;
             m_HideFlag[ idx ] = hideFlag;
+            m_obfusPass[ idx ] = GenObfusPass();
+            m_InquiryValue[ idx ] = Crypt.Base64Encoding( Crypt.CipherEncryption( value, m_obfusPass[ idx ], true ) );
         }
 
-        public void InsertInquiry( int idx, string name, string value, bool hideFlag ) {
+        public void InsertInquiryFromPlainValue( int idx, string name, string value, bool hideFlag ) {
+            string obfusStr = GenObfusPass();
+            InsertInquiryValue( idx, name, Crypt.Base64Encoding( Crypt.CipherEncryption( value, obfusStr, true ) ), hideFlag, obfusStr );
+        }
+
+        public void InsertInquiryWithTempStr( int idx, string name, string value, bool hideFlag, string tempStr ) {
+            InsertInquiryValue( idx, name, value, hideFlag, Crypt.Base64DecodingToStr( tempStr ) );
+        }
+
+        private void InsertInquiryValue( int idx, string name, string value, bool hideFlag, string obfusStr ) {
             if ( idx < 0 || m_InquiryCount < idx )
                 return ;
             if ( m_InquiryName.Length <= m_InquiryCount ) {
                 Array.Resize( ref m_InquiryName, m_InquiryName.Length * 2 );
                 Array.Resize( ref m_InquiryValue, m_InquiryValue.Length * 2 );
                 Array.Resize( ref m_HideFlag, m_HideFlag.Length * 2 );
+                Array.Resize( ref m_obfusPass, m_obfusPass.Length * 2 );
             }
             for ( int i = m_InquiryCount; i > idx; i-- ) {
                 m_InquiryName[ i ] = m_InquiryName[ i - 1 ];
                 m_InquiryValue[ i ] = m_InquiryValue[ i - 1 ];
                 m_HideFlag[ i ] = m_HideFlag[ i - 1 ];
+                m_obfusPass[ i ] = m_obfusPass[ i - 1 ];
             }
             m_InquiryCount++;
             m_InquiryName[ idx ] = name;
             m_InquiryValue[ idx ] = value;
             m_HideFlag[ idx ] = hideFlag;
+            m_obfusPass[ idx ] = obfusStr;
             m_ParentPasswordFile.SetModified();
+        }
+
+        private static string GenObfusPass()
+        {
+            int digit = 16;
+            Random r = new Random();
+            StringBuilder sb = new StringBuilder();
+            /*
+            string candstr = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"#$%&'()[]@:;<>/*-+~|{}`@_?.,\\ \t=";
+            string candstr2 = new String( candstr.OrderBy( i => r.Next( 0, 1073741824 ) ).ToArray() );
+            for ( int i = 0; i < digit; i++ ) {
+                sb.Append( candstr2[ r.Next( 0, candstr2.Length - 1 ) ] );
+            }
+            */
+            for ( int i = 0; i < digit; i++ ) {
+                char c = (char)( r.Next( 1, 254 ) * 8 + r.Next( 1, 254 ) );
+                sb.Append( c );
+            }
+            return new String( sb.ToString().OrderBy( i => r.Next( 0, 1073741824 ) ).ToArray() );
         }
 
         public void DeleteInquiry( int idx ) {
@@ -113,6 +153,7 @@ namespace GomaShio
                 m_InquiryName[ i ] = m_InquiryName[ i + 1 ];
                 m_InquiryValue[ i ] = m_InquiryValue[ i + 1 ];
                 m_HideFlag[ i ] = m_HideFlag[ i + 1 ];
+                m_obfusPass[ i ] = m_obfusPass[ i + 1 ];
             }
             m_InquiryCount--;
             m_ParentPasswordFile.SetModified();
@@ -126,17 +167,20 @@ namespace GomaShio
             string [] vName = new string[ m_InquiryName.Length ];
             string [] vValue = new string[ m_InquiryValue.Length ];
             bool [] vHide = new bool[ m_HideFlag.Length ];
+            string [] vObfusPass = new string[ m_obfusPass.Length ];
             for ( int i = 0; i < m_InquiryCount; i++ ) {
                 vName[i] = m_InquiryName[ vIdx[i] ];
                 vValue[i] = m_InquiryValue[ vIdx[i] ];
                 vHide[i] = m_HideFlag[ vIdx[i] ];
+                vObfusPass[i] = m_obfusPass[ vIdx[i] ];
             }
             m_InquiryName = vName;
             m_InquiryValue = vValue;
             m_HideFlag = vHide;
+            m_obfusPass = vObfusPass;
         }
 
-        public string BuildStringForOutput( int idx )
+        public string BuildStringForOutput( int idx, bool outputPlainFlg )
         {
             CultureInfo ci = new CultureInfo( "en-US" );
 
@@ -144,6 +188,8 @@ namespace GomaShio
             sb.AppendFormat( ci, "[Account_{0}]\n", idx );
             sb.AppendFormat( ci, "AccountName={0}\n", m_AccountName );
             sb.AppendFormat( ci, "InquiryCount={0}\n", m_InquiryCount );
+            if ( outputPlainFlg )
+                sb.Append( '\n' );
 
             for ( int i = 0; i < m_InquiryCount; i++ ) {
                 sb.AppendFormat( ci, "InquiryName_{0}={1}\n", i, m_InquiryName[i] );
@@ -151,7 +197,13 @@ namespace GomaShio
                     sb.AppendFormat( ci, "HideFlag_{0}=True\n", i );
                 else
                     sb.AppendFormat( ci, "HideFlag_{0}=False\n", i );
-                sb.AppendFormat( ci, "InquiryValue_{0}={1}\n", i, m_InquiryValue[i] );
+                if ( outputPlainFlg ) {
+                    sb.AppendFormat( ci, "InquiryValue_{0}={1}\n\n", i, GetInquiryValue( i ) );
+                }
+                else {
+                    sb.AppendFormat( ci, "InquiryValue_{0}={1}\n", i, m_InquiryValue[i] );
+                    sb.AppendFormat( ci, "TempStr_{0}={1}\n", i, Crypt.Base64EncodingFromStr( m_obfusPass[i] ) );
+                }
             }
             return sb.ToString();
         }

@@ -16,11 +16,21 @@ namespace GomaShio
     internal static class Crypt
     {
         private static int HASH_ITER_COUNT = 8192;
+        private static int HASH_ITER_COUNT_LIGHT = 2;
+        private static uint PBKDF2_ITER_COUNT = 32768u;
+        private static uint PBKDF2_ITER_COUNT_LIGHT = 16u;
 
         public static byte[] CipherEncryption(
             string plainText,
-            string password )
+            string password,
+            bool lightFlag )
         {
+            int hashIterCnt = HASH_ITER_COUNT;
+            if ( lightFlag ) hashIterCnt = HASH_ITER_COUNT_LIGHT;
+
+            uint pbkdf2IterCnt = PBKDF2_ITER_COUNT;
+            if ( lightFlag ) pbkdf2IterCnt = PBKDF2_ITER_COUNT_LIGHT;
+
             // Convert to password string to UTF-8 encoded binary data.
             IBuffer utf8Password = CryptographicBuffer.ConvertStringToBinary( password, BinaryStringEncoding.Utf8 );
 
@@ -31,11 +41,11 @@ namespace GomaShio
             hashObj.Append( salt1 );
             hashObj.Append( utf8Password );
             IBuffer buffHash1 = hashObj.GetValueAndReset();
-            for ( int i = 0; i < HASH_ITER_COUNT; i++ ) {
+            for ( int i = 0; i < hashIterCnt; i++ ) {
                 hashObj.Append( buffHash1 );
                 buffHash1 = hashObj.GetValueAndReset();
             }
-            byte[] d = buffHash1.ToArray();
+//            byte[] d = buffHash1.ToArray();
 
             // Generate one-time password
             SymmetricKeyAlgorithmProvider objAlg = SymmetricKeyAlgorithmProvider.OpenAlgorithm( SymmetricAlgorithmNames.AesCbcPkcs7 );
@@ -49,7 +59,7 @@ namespace GomaShio
                         KeyDerivationAlgorithmProvider.OpenAlgorithm(
                             KeyDerivationAlgorithmNames.Pbkdf2Sha256
                         ).CreateKey( utf8Password ),
-                        KeyDerivationParameters.BuildForPbkdf2( salt2, 32768 ),
+                        KeyDerivationParameters.BuildForPbkdf2( salt2, pbkdf2IterCnt ),
                         32
                     )
                 );
@@ -100,8 +110,15 @@ namespace GomaShio
             byte[] encData,
             string password,
             out string plainText,
-            out bool passwordError)
+            out bool passwordError,
+            bool lightFlag )
         {
+            int hashIterCnt = HASH_ITER_COUNT;
+            if ( lightFlag ) hashIterCnt = HASH_ITER_COUNT_LIGHT;
+
+            uint pbkdf2IterCnt = PBKDF2_ITER_COUNT;
+            if ( lightFlag ) pbkdf2IterCnt = PBKDF2_ITER_COUNT_LIGHT;
+
             plainText = "";
             passwordError = false;
 
@@ -173,7 +190,7 @@ namespace GomaShio
             hashObj.Append( salt1 );
             hashObj.Append( utf8Password );
             IBuffer buffHash1 = hashObj.GetValueAndReset();
-            for ( int i = 0; i < HASH_ITER_COUNT; i++ ) {
+            for ( int i = 0; i < hashIterCnt; i++ ) {
                 hashObj.Append( buffHash1 );
                 buffHash1 = hashObj.GetValueAndReset();
             }
@@ -189,7 +206,7 @@ namespace GomaShio
                         KeyDerivationAlgorithmProvider.OpenAlgorithm(
                             KeyDerivationAlgorithmNames.Pbkdf2Sha256
                         ).CreateKey( utf8Password ),
-                        KeyDerivationParameters.BuildForPbkdf2( solt2.AsBuffer(), 32768 ),
+                        KeyDerivationParameters.BuildForPbkdf2( solt2.AsBuffer(), pbkdf2IterCnt ),
                         32
                     )
                 );
@@ -206,5 +223,26 @@ namespace GomaShio
 
             return true;
         }
+
+        public static string Base64Encoding( byte[] d )
+        {
+            return Convert.ToBase64String( d );
+        }
+
+        public static string Base64EncodingFromStr( string s )
+        {
+            return Convert.ToBase64String( Encoding.GetEncoding( "UTF-8" ).GetBytes( s ) );
+        }
+
+        public static byte[] Base64Decoding( string s )
+        {
+            return Convert.FromBase64String( s );
+        }
+
+        public static string Base64DecodingToStr( string s )
+        {
+            return Encoding.GetEncoding( "UTF-8" ).GetString( Convert.FromBase64String( s ) );
+        }
+
     }
 }

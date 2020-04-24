@@ -587,7 +587,7 @@ namespace GomaShio
             d.HideItemValue = false;
             await d.ShowAsync();
             if ( d.IsOK ) {
-                ai.InsertInquiry( idx, d.ItemName, d.ItemValue, d.HideItemValue );
+                ai.InsertInquiryFromPlainValue( idx, d.ItemName, d.ItemValue, d.HideItemValue );
                 UpdateInquiryList( m_SelectedAccount );
                 InquiryList.SelectedIndex = idx;
             }
@@ -641,7 +641,7 @@ namespace GomaShio
 
             // Copy selected inquiry item
             AccountInfo ai = m_PasswordFile.GetAccountInfo( m_SelectedAccount );
-            ai.InsertInquiry( si, ai.GetInquiryName( si ), ai.GetInquiryValue( si ), ai.GetHideFlag( si ) );
+            ai.InsertInquiryFromPlainValue( si, ai.GetInquiryName( si ), ai.GetInquiryValue( si ), ai.GetHideFlag( si ) );
             UpdateInquiryList( m_SelectedAccount );
             InquiryList.SelectedIndex = si;
         }

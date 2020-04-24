@@ -130,7 +130,7 @@ namespace GomaShio
             if ( null == txtFile ) return ;
 
             // Generate string for output
-            string plainText = pwfile.BuildStringForOutput();
+            string plainText = pwfile.BuildStringForOutput( true );
 
             // write plain text file
             await FileIO.WriteBufferAsync( txtFile, Encoding.GetEncoding( "UTF-8" ).GetBytes( plainText ).AsBuffer() );
