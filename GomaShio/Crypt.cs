@@ -45,7 +45,6 @@ namespace GomaShio
                 hashObj.Append( buffHash1 );
                 buffHash1 = hashObj.GetValueAndReset();
             }
-//            byte[] d = buffHash1.ToArray();
 
             // Generate one-time password
             SymmetricKeyAlgorithmProvider objAlg = SymmetricKeyAlgorithmProvider.OpenAlgorithm( SymmetricAlgorithmNames.AesCbcPkcs7 );
@@ -68,8 +67,13 @@ namespace GomaShio
 
             // Encrypt the data
             IBuffer iv3 = CryptographicBuffer.GenerateRandom( objAlg.BlockLength );
-            IBuffer dataBuffer = CryptographicBuffer.ConvertStringToBinary( plainText, BinaryStringEncoding.Utf8 );
-            IBuffer encryptData = CryptographicEngine.Encrypt( objAlg.CreateSymmetricKey( oneTimePass ), dataBuffer, iv3 );
+            IBuffer encryptData = null;
+            uint encDataLen = 0;
+            if ( !String.IsNullOrEmpty( plainText ) ) {
+                IBuffer dataBuffer = CryptographicBuffer.ConvertStringToBinary( plainText, BinaryStringEncoding.Utf8 );
+                encryptData = CryptographicEngine.Encrypt( objAlg.CreateSymmetricKey( oneTimePass ), dataBuffer, iv3 );
+                encDataLen = encryptData.Length;
+            }
 
             // Append all of data
             byte[] retval =
@@ -78,10 +82,17 @@ namespace GomaShio
                     (int)objAlg.BlockLength +
                     (int)objAlg.BlockLength + 
                     encryptOneTimePass.Length +
-                    encryptData.Length
+                    encDataLen
                 ];
             int pos = 0;
-            Array.Copy( Encoding.GetEncoding( "ASCII" ).GetBytes( "GomaShio" ), 0, retval, pos, 8 );
+            if ( lightFlag ) {
+                Random r = new Random();
+                for ( int i = pos; i < pos + 8; i++ )
+                    retval[i] = (byte)r.Next( 0, 255 );
+            }
+            else {
+                Array.Copy( Encoding.GetEncoding( "ASCII" ).GetBytes( "GomaShio" ), 0, retval, pos, 8 );
+            }
             pos += 8;
             Array.Copy( new byte[2]{ 0, 0 },            0, retval, pos, 2 );
             pos += 2;
@@ -99,9 +110,10 @@ namespace GomaShio
             pos += (int)encryptOneTimePass.Length;
             Array.Copy( iv3.ToArray(),                  0, retval, pos, objAlg.BlockLength );
             pos += (int)objAlg.BlockLength;
-            Array.Copy( BitConverter.GetBytes( encryptData.Length ), 0, retval, pos, 4 );
+            Array.Copy( BitConverter.GetBytes( encDataLen ), 0, retval, pos, 4 );
             pos += 4;
-            Array.Copy( encryptData.ToArray(),          0, retval, pos, encryptData.Length );
+            if ( null != encryptData )
+                Array.Copy( encryptData.ToArray(),      0, retval, pos, encryptData.Length );
 
             return retval;
         }
@@ -176,11 +188,14 @@ namespace GomaShio
             if ( encData.Length < pos + encDataSubLength ) return false;
 
             byte[] encDataSub  = new byte[encDataSubLength];
-            Array.Copy( encData, pos,   encDataSub, 0, encDataSubLength );
+            if ( encDataSubLength > 0 )
+                Array.Copy( encData, pos,   encDataSub, 0, encDataSubLength );
 
             // Check magic bytes and version.
-            if ( !Enumerable.SequenceEqual( MagicBytes, Encoding.GetEncoding( "ASCII" ).GetBytes( "GomaShio" ) ) )
-                return false;
+            if ( !lightFlag ) {
+                if ( !Enumerable.SequenceEqual( MagicBytes, Encoding.GetEncoding( "ASCII" ).GetBytes( "GomaShio" ) ) )
+                    return false;
+            }
             if ( !Enumerable.SequenceEqual( Version, new byte[2]{ 0, 0 } ) )
                 return false;
 
@@ -213,13 +228,18 @@ namespace GomaShio
             IBuffer plainOneTimePass = CryptographicEngine.Decrypt( derviedKey, oneTimePass.AsBuffer(), iv2.AsBuffer() );
 
             // Decrypt the data
-            IBuffer decriptIBuffer =
-                CryptographicEngine.Decrypt(
-                    objAlg.CreateSymmetricKey( plainOneTimePass ),
-                    encDataSub.AsBuffer(),
-                    iv3.AsBuffer()
-                );
-            plainText = CryptographicBuffer.ConvertBinaryToString( BinaryStringEncoding.Utf8, decriptIBuffer );
+            if ( encDataSubLength > 0 ) {
+                IBuffer decriptIBuffer =
+                    CryptographicEngine.Decrypt(
+                        objAlg.CreateSymmetricKey( plainOneTimePass ),
+                        encDataSub.AsBuffer(),
+                        iv3.AsBuffer()
+                    );
+                plainText = CryptographicBuffer.ConvertBinaryToString( BinaryStringEncoding.Utf8, decriptIBuffer );
+            }
+            else {
+                plainText = "";
+            }
 
             return true;
         }

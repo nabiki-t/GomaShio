@@ -26,6 +26,5 @@
         <TextBlock x:Uid="ImportPasswordFileDescription" HorizontalAlignment="Left" Margin="173,272,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="281" Height="58" Text="Import IDs/Passwords from exported plain text file. Current registered IDs/Passwords are all cleared."/>
         <Button x:Uid="RecoveryFromBackupButton" Content="Recovery" Margin="11,332,0,0" Width="150" Height="54" Name="RecoveryFromBackupButton" Click="RecoveryFromBackupButton_Click" VerticalAlignment="Top"/>
         <TextBlock x:Uid="RecoveryFromBackupDescription" HorizontalAlignment="Left" Margin="173,332,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="281" Height="51" Text="Recovery old password file from backups."/>
-
     </Grid>
 </Page>

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
@@ -16,12 +18,18 @@ namespace GomaShio
         public bool IsOK { get; set; }
         public bool HideItemValue { get; set; }
 
-        public EditInquiry()
+        // Candidate strings registerd to InquiryItemName and InquiryItemValue combo boxes;
+        private SortedDictionary< string, KeyValuePair< string, SortedDictionary< string, string > > > m_CandidateDic;
+        string [] m_NameCandidate;
+        string [] m_ValueCandidate;
+
+        public EditInquiry( SortedDictionary< string, KeyValuePair< string, SortedDictionary< string, string > > > d )
         {
             ItemName = "";
             ItemValue = "";
             IsOK = false;
             HideItemValue = true;
+            m_CandidateDic = d;
             this.InitializeComponent();
         }
 
@@ -69,6 +77,21 @@ namespace GomaShio
                 PassExcludeConfuseCheck.IsChecked = (bool)ApplicationData.Current.LocalSettings.Values[ "PassExcludeConfuseCheck" ];
             else
                 PassExcludeConfuseCheck.IsChecked = true;
+
+            // Register ItemName candidate strings to InquiryItemName conbo box
+            if ( null != m_CandidateDic ) {
+                m_NameCandidate = new string[ m_CandidateDic.Values.Count ];
+                int cnt = 0;
+                foreach( KeyValuePair< string, SortedDictionary< string, string > > k in m_CandidateDic.Values ) {
+                    m_NameCandidate[ cnt ] = k.Key;
+                    cnt++;
+                    InquiryItemNameCandList.Items.Add( new TextBlock{ Text=k.Key, Margin=new Thickness(0.0) } );
+                }
+            }
+            else {
+                InquiryItemNameCandBtn.IsEnabled = false;
+                InquiryItemValueCandBtn.IsEnabled = false;
+            }
         }
 
         private void ContentDialog_PrimaryButtonClick( ContentDialog sender, ContentDialogButtonClickEventArgs args )
@@ -179,8 +202,54 @@ namespace GomaShio
             }
 
             InquiryItemValue.Text = new String( sb.ToString().OrderBy( i => r.Next( 0, 1073741824 ) ).ToArray() );
+
+            // If password string is generated, hide flag is automatically checked.
+            HideItemValueCheck.IsChecked = true;
         }
 
+        private void InquiryItemNameCandList_SelectionChanged( object sender, SelectionChangedEventArgs e )
+        {
+            _ = sender;
+            _ = e;
+            if ( null == m_NameCandidate ) return ;
+            if ( InquiryItemNameCandList.SelectedIndex < 0 || InquiryItemNameCandList.SelectedIndex >= m_NameCandidate.Length )
+                return ;
+            InquiryItemName.Text = m_NameCandidate[ InquiryItemNameCandList.SelectedIndex ];
+            InquiryItemNameCandBtn.Flyout.Hide();
+        }
 
+        private void InquiryItemValueCandBtn_Click( object sender, RoutedEventArgs e )
+        {
+            _ = sender;
+            _ = e;
+
+            if ( null == m_CandidateDic ) return ;
+
+            InquiryItemValueCandList.Items.Clear();
+
+            // Search dictionary by current item name
+            string curstr = InquiryItemName.Text.Trim().ToUpperInvariant();
+            KeyValuePair< string, SortedDictionary< string, string > > ck;
+            if ( !m_CandidateDic.TryGetValue( curstr, out ck ) ) return ;
+
+            int cnt = 0;
+            m_ValueCandidate = new string[ ck.Value.Count ];
+            foreach( string s in ck.Value.Values ) {
+                m_ValueCandidate[ cnt ] = s;
+                cnt++;
+                InquiryItemValueCandList.Items.Add( new TextBlock{ Text=s, Margin=new Thickness(0.0) } );
+            }
+        }
+
+        private void InquiryItemValueCandList_SelectionChanged( object sender, SelectionChangedEventArgs e )
+        {
+            _ = sender;
+            _ = e;
+            if ( null == m_ValueCandidate ) return ;
+            if ( InquiryItemValueCandList.SelectedIndex < 0 || InquiryItemValueCandList.SelectedIndex >= m_ValueCandidate.Length )
+                return ;
+            InquiryItemValue.Text = m_ValueCandidate[ InquiryItemValueCandList.SelectedIndex ];
+            InquiryItemValueCandBtn.Flyout.Hide();
+        }
     }
 }

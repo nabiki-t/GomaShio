@@ -8,6 +8,7 @@ using Windows.Storage.AccessCache;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using System.IO;
+using System.Collections.Generic;
 
 namespace GomaShio
 {
@@ -107,6 +108,8 @@ namespace GomaShio
 
         private async void App_Suspending( object sender, Windows.ApplicationModel.SuspendingEventArgs e )
         {
+            if ( null == m_PasswordFile )
+                return ;
             await SaveAccountFile().ConfigureAwait( true );
         }
 
@@ -581,7 +584,7 @@ namespace GomaShio
 
             // Get new inquiry info
             AccountInfo ai = m_PasswordFile.GetAccountInfo( m_SelectedAccount );
-            EditInquiry d = new EditInquiry();
+            EditInquiry d = new EditInquiry( CreateEditInquiryCondidateDic() );
             d.ItemName = "";
             d.ItemValue = "";
             d.HideItemValue = false;
@@ -666,36 +669,6 @@ namespace GomaShio
             };
             dataPackage.SetText( ai.GetInquiryValue( idx ) );
             Clipboard.SetContent( dataPackage );
-        }
-
-        // Edit inquiry button created on inquiry list control is clicked.
-        private async void OnEditInquiryButton_Click( object sender, RoutedEventArgs e, int idx )
-        {
-            _ = sender;
-            _ = e;
-
-            // If password file is not loaded, ignore this operation.
-            if ( null == m_PasswordFile ) return ;
-
-            // If in Read-Only mode, ignore this operation.
-            if ( !m_EnableEdit ) return ;
-
-            // If Account list item is not selected, ignore this event
-            if ( m_SelectedAccount < 0 || m_SelectedAccount >= m_PasswordFile.GetCount() ) return ;
-
-            AccountInfo ai = m_PasswordFile.GetAccountInfo( m_SelectedAccount );
-
-            // show edit dialog
-            EditInquiry d = new EditInquiry();
-            d.ItemName = ai.GetInquiryName( idx );
-            d.ItemValue = ai.GetInquiryValue( idx );
-            d.HideItemValue = ai.GetHideFlag( idx );
-            await d.ShowAsync();
-            if ( d.IsOK ) {
-                ai.SetInquiry( idx, d.ItemName, d.ItemValue, d.HideItemValue );
-                m_InquiryList_ItemTitles[idx].Text = d.ItemName;
-                m_InquiryList_ItemTexts[idx].Text = d.ItemValue;
-            }
         }
 
         // Selection of inquiry list is changed
@@ -858,7 +831,7 @@ namespace GomaShio
             UpdateInquiryList( AccountList.SelectedIndex );
         }
 
-        private void InquiryList_DoubleTapped( object sender, DoubleTappedRoutedEventArgs e )
+        private async void InquiryList_DoubleTapped( object sender, DoubleTappedRoutedEventArgs e )
         {
             _ = sender;
 
@@ -872,10 +845,26 @@ namespace GomaShio
             if ( !m_EnableEdit ) return ;
 
             // If Account list item is not selected, ignore this event
-            if ( m_SelectedAccount < 0 ) return ;
+            if ( m_SelectedAccount < 0 || m_SelectedAccount >= m_PasswordFile.GetCount() ) return ;
 
-            int si = InquiryList.SelectedIndex;
-            OnEditInquiryButton_Click( null, null, si );
+            int idx = InquiryList.SelectedIndex;
+            AccountInfo ai = m_PasswordFile.GetAccountInfo( m_SelectedAccount );
+
+            // show edit dialog
+            string hiddenString = GlbFunc.GetResourceString( "PASS_HIDDEN_STRING", "******" );
+            EditInquiry d = new EditInquiry( CreateEditInquiryCondidateDic() );
+            d.ItemName = ai.GetInquiryName( idx );
+            d.ItemValue = ai.GetInquiryValue( idx );
+            d.HideItemValue = ai.GetHideFlag( idx );
+            await d.ShowAsync();
+            if ( d.IsOK ) {
+                ai.SetInquiry( idx, d.ItemName, d.ItemValue, d.HideItemValue );
+                m_InquiryList_ItemTitles[idx].Text = d.ItemName;
+                if ( d.HideItemValue )
+                    m_InquiryList_ItemTexts[idx].Text = hiddenString;
+                else
+                    m_InquiryList_ItemTexts[idx].Text = d.ItemValue;
+            }
         }
 
         private async void EditEnableToggle_Toggled( object sender, RoutedEventArgs e )
@@ -962,6 +951,41 @@ namespace GomaShio
             for ( int i = 0; i < m_InquiryList_ItemCount; i++ ) {
                 m_InquiryList_Border[i].Background = inquiryBorderBrush;
             }
+        }
+
+        SortedDictionary< string, KeyValuePair< string, SortedDictionary< string, string > > > CreateEditInquiryCondidateDic()
+        {
+            if ( null == m_PasswordFile ) return null;
+            var r = new SortedDictionary< string, KeyValuePair< string, SortedDictionary< string, string > > >();
+            for ( int i = 0; i < m_PasswordFile.GetCount(); i++ ) {
+                AccountInfo ai = m_PasswordFile.GetAccountInfo( i );
+                for ( int j = 0; j < ai.GetInquiryCount(); j++ ) {
+                    string name_o = ai.GetInquiryName( j );
+                    string name_u = name_o.Trim().ToUpperInvariant();
+                    bool hide = ai.GetHideFlag( j );
+
+                    KeyValuePair< string, SortedDictionary< string, string > > wr;
+                    if ( r.TryGetValue( name_u, out wr ) ) {
+                        // If duplicate item name is exist, add visible value to dictionary.
+                        if ( !hide ) {
+                            string value_o = ai.GetInquiryValue( j );
+                            string value_u = value_o.Trim().ToUpperInvariant();
+                            wr.Value.TryAdd( value_u, value_o );
+                        }
+                    }
+                    else {
+                        // If current item name is not exist, add this name and first visible value to dictionary.
+                        var newvaldic = new SortedDictionary< string, string >();
+                        if ( !hide ) {
+                            string value_o = ai.GetInquiryValue( j );
+                            string value_u = value_o.Trim().ToUpperInvariant();
+                            newvaldic.Add( value_u, value_o );
+                        }
+                        r.TryAdd( name_u, new KeyValuePair< string, SortedDictionary< string, string > >( name_o, newvaldic ) );
+                    }
+                }
+            }
+            return r;
         }
     }
 }

@@ -16,15 +16,25 @@
     <Grid Margin="0,0,0,0" Width="450">
         <Grid VerticalAlignment="Top">
             <TextBlock x:Uid="InquiryItemNameTitle" HorizontalAlignment="Left" Margin="0,0,0,0" Text="Item Name" VerticalAlignment="center" Width="69"/>
-            <ComboBox Name="InquiryItemName" Margin="90,0,5,0" Text="" VerticalAlignment="Center" HorizontalAlignment="Stretch" IsEditable="True" >
-                <TextBlock x:Uid="InquiryDefaultName1" Text="User ID"/>
-                <TextBlock x:Uid="InquiryDefaultName2" Text="Password"/>
-                <TextBlock x:Uid="InquiryDefaultName3" Text="URL"/>
-            </ComboBox>
+            <TextBox Name="InquiryItemName" Margin="90,0,42,0" Text="" VerticalAlignment="Center" HorizontalAlignment="Stretch" />
+            <Button Name="InquiryItemNameCandBtn" Content=">>" Margin="413,0,0,0" HorizontalAlignment="Stretch" >
+                <Button.Flyout>
+                    <Flyout>
+                        <ListBox Name="InquiryItemNameCandList" SelectionChanged="InquiryItemNameCandList_SelectionChanged" />
+                    </Flyout>
+                </Button.Flyout>
+            </Button>
         </Grid>
         <Grid VerticalAlignment="Top" Margin="0,40,0,0">
             <TextBlock x:Uid="InquiryItemValueTitle" HorizontalAlignment="Left" Margin="0,0,0,0" Text="Value" VerticalAlignment="center" Width="69"/>
-            <TextBox Name="InquiryItemValue" Margin="90,0,5,0" Text="" VerticalAlignment="Center" />
+            <TextBox Name="InquiryItemValue" Margin="90,0,42,0" Text="" VerticalAlignment="Center" HorizontalAlignment="Stretch" />
+            <Button Name="InquiryItemValueCandBtn" Content=">>" Margin="413,0,0,0" HorizontalAlignment="Stretch" Click="InquiryItemValueCandBtn_Click">
+                <Button.Flyout>
+                    <Flyout>
+                        <ListBox Name="InquiryItemValueCandList" SelectionChanged="InquiryItemValueCandList_SelectionChanged" />
+                    </Flyout>
+                </Button.Flyout>
+            </Button>
         </Grid>
         <Grid VerticalAlignment="Top" Margin="0,80,0,0">
             <CheckBox x:Uid="HideItemValueCheck" Name="HideItemValueCheck" Content="Hide item value" Width="350" Margin="90,0,0,0" />

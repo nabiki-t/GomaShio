@@ -70,9 +70,16 @@ namespace GomaShio
             bool err;
             if ( idx < 0 || idx >= m_InquiryCount )
                 return "";
-            if ( !Crypt.CipherDecryption( Crypt.Base64Decoding( m_InquiryValue[ idx ] ), m_obfusPass[ idx ], out rstr, out err, true ) )
-                return "";
-            return rstr;
+            if ( m_HideFlag[ idx ] ) {
+                // If hide flag is on, the inquiry value is encrypted.
+                if ( !Crypt.CipherDecryption( Crypt.Base64Decoding( m_InquiryValue[ idx ] ), m_obfusPass[ idx ], out rstr, out err, true ) )
+                    return "";
+                return rstr;
+            }
+            else {
+                // If hide flag is off, the inquiry value is plain text.
+                return m_InquiryValue[ idx ];
+            }
         }
         public bool GetHideFlag( int idx ) {
             if ( idx < 0 || idx >= m_InquiryCount )
@@ -91,8 +98,17 @@ namespace GomaShio
                 m_ParentPasswordFile.SetModified();
             m_InquiryName[ idx ] = name;
             m_HideFlag[ idx ] = hideFlag;
-            m_obfusPass[ idx ] = GenObfusPass();
-            m_InquiryValue[ idx ] = Crypt.Base64Encoding( Crypt.CipherEncryption( value, m_obfusPass[ idx ], true ) );
+            if ( hideFlag ) {
+                // If hide flag is on, specified inquiry value is stored by encrypted string.
+                m_obfusPass[ idx ] = GenObfusPass();
+                m_InquiryValue[ idx ] = Crypt.Base64Encoding( Crypt.CipherEncryption( value, m_obfusPass[ idx ], true ) );
+            }
+            else {
+                // If hide flag is off, specified inquiry value is stored by plain text.
+                // And obfus pass string is not used.
+                m_obfusPass[ idx ] = "";
+                m_InquiryValue[ idx ] = value;
+            }
         }
 
         public void InsertInquiryFromPlainValue( int idx, string name, string value, bool hideFlag ) {
@@ -132,13 +148,6 @@ namespace GomaShio
             int digit = 16;
             Random r = new Random();
             StringBuilder sb = new StringBuilder();
-            /*
-            string candstr = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"#$%&'()[]@:;<>/*-+~|{}`@_?.,\\ \t=";
-            string candstr2 = new String( candstr.OrderBy( i => r.Next( 0, 1073741824 ) ).ToArray() );
-            for ( int i = 0; i < digit; i++ ) {
-                sb.Append( candstr2[ r.Next( 0, candstr2.Length - 1 ) ] );
-            }
-            */
             for ( int i = 0; i < digit; i++ ) {
                 char c = (char)( r.Next( 1, 254 ) * 8 + r.Next( 1, 254 ) );
                 sb.Append( c );
@@ -186,6 +195,15 @@ namespace GomaShio
 
             StringBuilder sb = new StringBuilder();
             sb.AppendFormat( ci, "[Account_{0}]\n", idx );
+
+            if ( outputPlainFlg ) {
+                sb.AppendFormat( ci, "; {0}\n", m_AccountName );
+                for ( int i = 0; i < m_InquiryCount; i++ ) {
+                    sb.AppendFormat( ci, "; {0}\t:\t{1}\n", m_InquiryName[i], GetInquiryValue( i ) );
+                }
+                sb.Append( '\n' );
+            }
+
             sb.AppendFormat( ci, "AccountName={0}\n", m_AccountName );
             sb.AppendFormat( ci, "InquiryCount={0}\n", m_InquiryCount );
             if ( outputPlainFlg )
@@ -193,17 +211,25 @@ namespace GomaShio
 
             for ( int i = 0; i < m_InquiryCount; i++ ) {
                 sb.AppendFormat( ci, "InquiryName_{0}={1}\n", i, m_InquiryName[i] );
-                if ( m_HideFlag[i] )
-                    sb.AppendFormat( ci, "HideFlag_{0}=True\n", i );
-                else
+                if ( !m_HideFlag[i] ) {
+                    // If hide flag is off, inquiry value is stored by plain text.
                     sb.AppendFormat( ci, "HideFlag_{0}=False\n", i );
-                if ( outputPlainFlg ) {
-                    sb.AppendFormat( ci, "InquiryValue_{0}={1}\n\n", i, GetInquiryValue( i ) );
+                    sb.AppendFormat( ci, "InquiryValue_{0}={1}\n", i, m_InquiryValue[ i ] );
                 }
                 else {
-                    sb.AppendFormat( ci, "InquiryValue_{0}={1}\n", i, m_InquiryValue[i] );
-                    sb.AppendFormat( ci, "TempStr_{0}={1}\n", i, Crypt.Base64EncodingFromStr( m_obfusPass[i] ) );
+                    sb.AppendFormat( ci, "HideFlag_{0}=True\n", i );
+                    if ( outputPlainFlg ) {
+                        // Oputput decrypted inquiry value
+                        sb.AppendFormat( ci, "InquiryValue_{0}={1}\n", i, GetInquiryValue( i ) );
+                    }
+                    else {
+                        // Output encrypted string and base64 encoded obfus pass string
+                        sb.AppendFormat( ci, "InquiryValue_{0}={1}\n", i, m_InquiryValue[i] );
+                        sb.AppendFormat( ci, "TempStr_{0}={1}\n", i, Crypt.Base64EncodingFromStr( m_obfusPass[i] ) );
+                    }
                 }
+                if ( outputPlainFlg )
+                    sb.Append( '\n' );
             }
             return sb.ToString();
         }

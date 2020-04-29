@@ -260,5 +260,13 @@ namespace GomaShio
             // Show recovery dialog
             await ( new RecoveryBackupDialog() ).ShowAsync();
         }
+/*
+        private void dummyButton_Click( object sender, RoutedEventArgs e )
+        {
+            _ = sender;
+            _ = e;
+            dummyList.Items.Add( new TextBlock{ Text="aaa", Margin=new Thickness(0.0) } );
+        }
+*/
     }
 }

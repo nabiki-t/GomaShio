@@ -147,7 +147,12 @@ namespace GomaShio
             StorageFolder backupFolder = await localFolder.CreateFolderAsync( "backups", CreationCollisionOption.OpenIfExists );
             
             // Get old backup files list.
-            IReadOnlyList<StorageFile> oldBackups = await backupFolder.GetFilesAsync( Windows.Storage.Search.CommonFileQuery.OrderByName );
+            IReadOnlyList<StorageFile> oldBackups = null;
+            try {
+                oldBackups = await backupFolder.GetFilesAsync( Windows.Storage.Search.CommonFileQuery.OrderByName );
+            }
+            catch ( Exception e ) {
+            }
 
             // Delete old backup files
             for ( int i = 0; i < oldBackups.Count - 15; i++ )
