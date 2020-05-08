@@ -112,12 +112,21 @@ namespace GomaShio
         }
 
         public void InsertInquiryFromPlainValue( int idx, string name, string value, bool hideFlag ) {
-            string obfusStr = GenObfusPass();
-            InsertInquiryValue( idx, name, Crypt.Base64Encoding( Crypt.CipherEncryption( value, obfusStr, true ) ), hideFlag, obfusStr );
+            if ( hideFlag ) {
+                // If hide flag is on, specified inquiry value is stored by encrypted string.
+                string obfusStr = GenObfusPass();
+                InsertInquiryValue( idx, name, Crypt.Base64Encoding( Crypt.CipherEncryption( value, obfusStr, true ) ), true, obfusStr );
+            }
+            else {
+                // If hide flag is off, specified inquiry value is stored by plain text.
+                // And obfus pass string is not used.
+                InsertInquiryValue( idx, name, value, false, "" );
+            }
         }
 
-        public void InsertInquiryWithTempStr( int idx, string name, string value, bool hideFlag, string tempStr ) {
-            InsertInquiryValue( idx, name, value, hideFlag, Crypt.Base64DecodingToStr( tempStr ) );
+        public void InsertInquiryWithTempStr( int idx, string name, string value, string tempStr ) {
+            // value is always encrypted by obfus pass string that is encoded by base64.
+            InsertInquiryValue( idx, name, value, true, Crypt.Base64DecodingToStr( tempStr ) );
         }
 
         private void InsertInquiryValue( int idx, string name, string value, bool hideFlag, string obfusStr ) {

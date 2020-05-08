@@ -14,10 +14,22 @@
     SecondaryButtonClick="ContentDialog_SecondaryButtonClick">
 
     <Grid HorizontalAlignment="Stretch" Margin="0,0,0,0" VerticalAlignment="Stretch">
-        <TextBlock x:Uid="PasswordText1Title" HorizontalAlignment="Stretch" Margin="10,6,21,0" Text="Enter password string" TextWrapping="Wrap" VerticalAlignment="Top"/>
-        <TextBox Name="PasswordText1" Margin="10,33,0,0" Text="" VerticalAlignment="Top" Height="32" HorizontalAlignment="Stretch" TextChanged="PasswordText1_TextChanged"/>
-        <TextBlock x:Uid="PasswordText2Title" Margin="10,75,21,0" Text="Confirm" TextWrapping="Wrap" VerticalAlignment="Top"/>
-        <TextBox Name="PasswordText2" Margin="10,102,0,0" Text="" VerticalAlignment="Top" Height="32" HorizontalAlignment="Stretch" TextChanged="PasswordText2_TextChanged"/>
-        <CheckBox x:Uid="NewPassDSavePasswordCheck" Name="SavePasswordCheck" HorizontalAlignment="Stretch" Margin="10,139,0,0" VerticalAlignment="Top" Height="33" Content="Save password" />
+        <StackPanel>
+            <TextBlock x:Uid="PasswordErrorText" Name="PasswordErrorText" HorizontalAlignment="Stretch" Margin="10,6,21,0" Text="Password unmatch" TextWrapping="Wrap" VerticalAlignment="Top" Foreground="Red"/>
+            <Grid>
+                <TextBlock x:Uid="SetPasswordDlgOldTitle" Name="SetPasswordDlgOldTitle"  HorizontalAlignment="Stretch" Margin="10,0,21,0" TextWrapping="Wrap" VerticalAlignment="Top" Text="Old password" />
+                <TextBox Name="OldPasswordText" Margin="10,23,0,0" Text="" VerticalAlignment="Top" Height="32" TextChanged="OldPasswordText_TextChanged"/>
+            </Grid>
+            <Grid>
+                <TextBlock x:Uid="SetPasswordDlgNewTitle" HorizontalAlignment="Stretch" Margin="10,0,21,0" TextWrapping="Wrap" VerticalAlignment="Top"  Text="New password" />
+                <TextBox Name="NewPasswordText" Margin="10,23,0,0" Text="" VerticalAlignment="Top" Height="32" HorizontalAlignment="Stretch" TextChanged="NewPasswordText_TextChanged"/>
+            </Grid>
+            <Grid>
+                <TextBlock x:Uid="SetPasswordDlgConfirmTitle" Margin="10,0,21,0" Text="Confirm" TextWrapping="Wrap" VerticalAlignment="Top"/>
+                <TextBox Name="ConfirmText" Margin="10,23,0,0" Text="" VerticalAlignment="Top" Height="32" HorizontalAlignment="Stretch" TextChanged="ConfirmText_TextChanged"/>
+            </Grid>
+            <CheckBox x:Uid="NewPassDSavePasswordCheck" Name="SavePasswordCheck" HorizontalAlignment="Stretch" Margin="10,0,0,0" VerticalAlignment="Top" Height="33" Content="Save password" />
+        </StackPanel>
+
     </Grid>
 </ContentDialog>

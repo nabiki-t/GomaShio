@@ -17,25 +17,68 @@ namespace GomaShio
     /// </summary>
     public sealed partial class PasswordListPage : Page
     {
+        /// Loaded accounts information. If it failed to loads the password file, null is set in this field.
         PasswordFile m_PasswordFile;
+
+        /// Password string of loaded password file. Password is encripted and stored in this field.
         string m_Password;
 
+        /// Reference of XAML text block object that holds account name and is in account list object.
         TextBlock [] m_AccountList_ItemNames;
+
+        /// Reference of XAML border object that is in account list object.
         Border [] m_AccountList_Border;
+
+        /// Count number of objects in m_AccountList_ItemNames and m_AccountList_Border
         int m_AccountList_ItemCount;
 
+        /// Reference of XAML text block object that holds inquiry name and is in inquiry list object.
         TextBlock [] m_InquiryList_ItemTitles;
+
+        /// Reference of XAML text block object that holds inquiry value and is in inquiry list object.
         TextBlock [] m_InquiryList_ItemTexts;
+
+        /// Reference of XAML button object that used in copy action and is in inquiry list object.
         Button [] m_InquiryList_CopyButton;
+
+        /// Event handler set to copy button in inquiry list.
         RoutedEventHandler [] m_InquiryList_CopyButton_Click;
+
+        /// Reference of XAML border object that is in inquiry list object.
         Border [] m_InquiryList_Border;
 
+        /// Count number of objects in m_InquiryList_ItemTitles, m_InquiryList_ItemTexts,
+        /// m_InquiryList_CopyButton, m_InquiryList_CopyButton_Click and m_InquiryList_Border.
         int m_InquiryList_ItemCount;
+
+        /// selected item index number of account list object.
+        /// If not selected, -1 is set in this lield.
         int m_SelectedAccount;
+
+        /// Flag field that is set true if account name text block value will updated by program.
+        /// It used to ignore tha event in handler function.
         bool m_AccountNameTextUpdateFlg;
+
+        /// Flag field that if set true if item selection of account list will be updated by program.
+        /// It used to ignore tha event in handler function.
         bool m_AccountListSelectionFlg;
+
+        /// Status of editable mode or not.
         bool m_EnableEdit;
 
+        /// Timer object of file saving
+        private DispatcherTimer m_SaveTimer;
+
+        /// Last edit date time
+        private DateTime m_LastEditDate;
+
+        private static string MODIFIED_LABEL_TEXT;
+        private static string SAVED_LABEL_TEXT;
+
+        /// <summary>
+        /// Constructor of PasswordListPage class object.
+        /// Initialize member fields.
+        /// </summary>
         public PasswordListPage()
         {
             m_AccountList_ItemNames = new TextBlock[16];
@@ -51,6 +94,7 @@ namespace GomaShio
             m_AccountNameTextUpdateFlg = false;
             m_AccountListSelectionFlg = false;
             m_EnableEdit = false;
+            m_SaveTimer = null;
             this.InitializeComponent();
         }
 
@@ -59,7 +103,17 @@ namespace GomaShio
             _ = sender;
             _ = e;
 
-            // In first, all of controls are disabled.
+            m_SaveTimer = new DispatcherTimer();
+            m_SaveTimer.Interval = TimeSpan.FromMilliseconds( 1000 );
+            m_SaveTimer.Tick += OnSaveTimer;
+            m_SaveTimer.Start();
+            m_LastEditDate = DateTime.UtcNow;
+
+            MODIFIED_LABEL_TEXT = GlbFunc.GetResourceString( "EditEnableToggle_ModifiedText", "Ediable *" );
+            SAVED_LABEL_TEXT = GlbFunc.GetResourceString( "EditEnableToggle_SavedText", "Ediable" );
+            EditEnableToggle.OnContent = SAVED_LABEL_TEXT;
+
+            // all of controls are disabled.
             AccountList.Items.Clear();
             InquiryList.Items.Clear();
             m_AccountList_ItemCount = 0;
@@ -69,6 +123,7 @@ namespace GomaShio
             if ( !await LoadPasswordFile().ConfigureAwait( true ) ) {
                 // If failed to load password file, all of controls are remain disabled.
                 m_PasswordFile = null;
+                EditEnableToggle.IsEnabled = false;
                 return ;
             }
             AccountList.Items.Clear();
@@ -88,60 +143,78 @@ namespace GomaShio
                 UpdateInquiryList( -1 );
             }
 
-            Application.Current.Suspending += new SuspendingEventHandler(App_Suspending);
-
             // If account info is empty, default is editable. Others, default is read-only.
             EditEnableToggle.IsOn = ( m_PasswordFile.GetCount() == 0 );
 
+            Application.Current.Suspending += new SuspendingEventHandler(App_Suspending);
         }
 
-        private async void Page_Unloaded( object sender, RoutedEventArgs e )
+        private void Page_Unloaded( object sender, RoutedEventArgs e )
         {
             _ = sender;
             _ = e;
 
             Application.Current.Suspending -= new SuspendingEventHandler(App_Suspending);
+
+            if ( null != m_SaveTimer ) {
+                m_SaveTimer.Stop();
+                m_SaveTimer.Tick -= OnSaveTimer;
+                m_SaveTimer = null;
+            }
+
             if ( null == m_PasswordFile )
                 return ;
-            await SaveAccountFile().ConfigureAwait( true );
+            SaveAccountFile();
         }
 
-        private async void App_Suspending( object sender, Windows.ApplicationModel.SuspendingEventArgs e )
+        // On close application
+        private void App_Suspending( object sender, object e )
         {
-            if ( null == m_PasswordFile )
-                return ;
-            await SaveAccountFile().ConfigureAwait( true );
+            SaveAccountFile();
         }
 
-        private async Task SaveAccountFile()
+        // File saving timer event
+        private void OnSaveTimer( object sender, object e )
+        {
+            _ = sender;
+            _ = e;
+
+            // If it is not ediable mode, ignore this event
+            if ( !m_EnableEdit )
+                return ;
+
+            TimeSpan s = DateTime.UtcNow - m_LastEditDate;
+
+            if ( s.TotalMilliseconds < 0 ) {
+                SaveAccountFile();
+                return ;
+            }
+
+            // If more than 3 seconds have not passed since the last change, wait a little longer.
+            if ( s.TotalMilliseconds < 2500 )
+                return ;
+
+            // save file
+            SaveAccountFile();
+        }
+
+        //private async void SaveAccountFile()
+        private void SaveAccountFile()
         {
             // If password file is not loaded, there are not to save data.
             if ( null == m_PasswordFile ) return ;
 
             // If current password file is not modified, skip save file.
-            if ( !m_PasswordFile.IsModified ) return ;
-
-            // Get saved file token of password file.
-            string ftoken = (string)ApplicationData.Current.LocalSettings.Values[ "FileToken" ];
-            if ( string.IsNullOrEmpty( ftoken ) ) {
-                // If the token of Password List file is not exists, I give up to save the password file.
-                return;
-            }
-
-            StorageFile file = null;
-            try {
-                file = await StorageApplicationPermissions.MostRecentlyUsedList.GetFileAsync( ftoken );
-            }
-            catch ( FileNotFoundException ) { }
-            catch ( UnauthorizedAccessException ) { }
-            catch ( ArgumentException ) { };
-            if ( null == file ) {
-                // If failed to get file permission, I give up to read the password file.
-                return;
-            }
+            if ( !m_PasswordFile.IsModified )
+                return ;
 
             // save
-            await m_PasswordFile.Save( file, m_Password ).ConfigureAwait( true );
+            m_PasswordFile.Save( m_Password );
+
+            // Update last editing time
+            m_LastEditDate = DateTime.UtcNow;
+
+            EditEnableToggle.OnContent = SAVED_LABEL_TEXT;
         }
 
         private void UpdateAccountList()
@@ -202,27 +275,62 @@ namespace GomaShio
 
         private static Windows.UI.Color CalcBorderColor( int count, int idx, bool isEdiable )
         {
-            const int r_top = 128;
-            const int r_bottom = 128;
-            const int g_top = 92;
-            const int g_bottom = 224;
-            const int b_top = 255;
-            const int b_bottom = 92;
+            const int h_top = 240;
+            const int h_bottom = 40;
+            const int s_top = 192;
+            const int s_bottom = 160;
+            const int v_top = 255;
+            const int v_bottom = 192;
+            int h,s,v,r,g,b,m;
 
             if ( isEdiable ) {
-                return Windows.UI.Color.FromArgb( 255, 255, 0, 0 );
+                h = 0;
+                s = 255;
+                v = 255;
             }
-            if ( count <= 1 ) {
-                return Windows.UI.Color.FromArgb( 255, r_top, g_bottom, b_top );
+            else if ( count <= 1 ) {
+                h = h_top;
+                s = s_top;
+                v = v_top;
             }
             else {
-                return Windows.UI.Color.FromArgb(
-                    255,
-                    (byte)( r_top + ( ( r_bottom - r_top ) / ( count - 1 ) ) * idx ),
-                    (byte)( g_top + ( ( g_bottom - g_top ) / ( count - 1 ) ) * idx ),
-                    (byte)( b_top + ( ( b_bottom - b_top ) / ( count - 1 ) ) * idx )
-                );
+                h = ( h_top + ( ( h_bottom - h_top ) / ( count - 1 ) ) * idx );
+                s = ( s_top + ( ( s_bottom - s_top ) / ( count - 1 ) ) * idx );
+                v = ( v_top + ( ( v_bottom - v_top ) / ( count - 1 ) ) * idx );
             }
+
+            m = v - ( s * v / 255 );
+            if ( h < 60 ) {
+                r = v;
+                g = h * ( v - m ) / 60 + m;
+                b = m;
+            }
+            else if ( h < 120 ) {
+                r = ( 120 - h ) * ( v - m ) / 60 + m;
+                g = v;
+                b = m;
+            }
+            else if ( h < 180 ) {
+                r = m;
+                g = v;
+                b = ( h - 120 ) * ( v - m ) / 60 + m;
+            }
+            else if ( h < 240 ) {
+                r = m;
+                g = ( 240 - h ) * ( v - m ) / 60 + m;
+                b = v;
+            }
+            else if ( h < 300 ) {
+                r = ( h - 240 ) * ( v - m ) / 60 + m;
+                g = m;
+                b = v;
+            }
+            else {
+                r = v;
+                g = m;
+                b = ( 360 - h ) * ( v - m ) / 60 + m;
+            }
+            return Windows.UI.Color.FromArgb( 255, (byte)r, (byte)g, (byte)b );
         }
 
         private void UpdateInquiryList( int accountInfoIdx )
@@ -362,88 +470,64 @@ namespace GomaShio
         }
 
         private async Task<bool> LoadPasswordFile() {
-
-            // clear existing password file object.
-            m_PasswordFile = null;
-            PasswordFile wPWFile = new PasswordFile();
-
-            string ftoken = (string)ApplicationData.Current.LocalSettings.Values[ "FileToken" ];
-            if ( string.IsNullOrEmpty( ftoken ) ) {
-                // If the token of Password List file is not exists, I give up to read the password file.
-                return false;
-            }
-
-            StorageFile file = null;
-            try {
-                file = await StorageApplicationPermissions.MostRecentlyUsedList.GetFileAsync( ftoken );
-            }
-            catch ( FileNotFoundException ) { }
-            catch ( UnauthorizedAccessException ) { }
-            catch ( ArgumentException ) { };
-            if ( null == file ) {
-                // If failed to get file permission, I give up to read the password file.
-                GlbFunc.ShowMessage( "MSG_FAILED_LOAD_PASSWORD_FILE", "It failed to load password file." );
-                return false;
-            }
+            string masterPass = "";
+            bool passerror;
+            bool isFirst = true;
 
             // Get saved password
-            string password = "";
-            bool savePasswordFlg = ApplicationData.Current.LocalSettings.Values.ContainsKey( "Password" );
-            if ( savePasswordFlg ) {
-                password = (string)ApplicationData.Current.LocalSettings.Values[ "Password" ];
-            }
-
-            int loadResult = 2;
-
-            // If password is saved, load specified file.
-            if ( !String.IsNullOrEmpty( password ) ) {
-                loadResult = await wPWFile.Load( file, password ).ConfigureAwait( true );
-                // If faile IO error is occured, return with failed.
-                if ( 1 == loadResult ) {
-                GlbFunc.ShowMessage( "MSG_FAILED_LOAD_PASSWORD_FILE", "It failed to load password file." );
-                    return false;
+            string savedPass = AppData.GetSavedUserPassword();
+            if ( !string.IsNullOrEmpty( savedPass ) ) {
+                if ( !AppData.Authenticate( savedPass, out passerror, out masterPass ) ) {
+                    // If authenticate is failed by unknown error, it failed to load file.
+                    if ( !passerror ) return false;
+                    masterPass = "";
+                    isFirst = false;
                 }
             }
 
-            PasswordDialog d = new PasswordDialog();
-            d.IsFirstTime = true;
-            while ( 2 == loadResult ) {
-                // Get new password
-                d.Password = password;
-                d.SavePassword = savePasswordFlg;
+            string d_userPass = "";
+            bool d_savePassFlg = false;
+            while( string.IsNullOrEmpty( masterPass ) ) {
+
+                // Show password dialog
+                PasswordDialog d = new PasswordDialog();
+                d.Password = d_userPass;
+                d.SavePassword = d_savePassFlg;
+                d.IsFirstTime = isFirst;
                 await d.ShowAsync();
-                // If canceld, if failed to load.
+
+                // If canceled, failed to load file.
                 if ( !d.IsOK ) return false;
+                d_userPass = d.Password;
+                d_savePassFlg = d.SavePassword;
 
-                password = d.Password;
-                savePasswordFlg = d.SavePassword;
-                d.IsFirstTime = false;
-
-                // load file
-                loadResult = await wPWFile.Load( file, password ).ConfigureAwait( true );
-                switch( loadResult ) {
-                case 0: // success
-                        break;
-                case 1: // file read error
-                        GlbFunc.ShowMessage( "MSG_FAILED_LOAD_PASSWORD_FILE", "It failed to load password file." );
-                        return false;
-                case 2: // password error
-                        Task.Delay( TimeSpan.FromMilliseconds( 500 ) ).Wait();
-                        break;
+                if ( !AppData.Authenticate( d_userPass, out passerror, out masterPass ) ) {
+                    // If authenticate is failed by unknown error, it failed to load file.
+                    if ( !passerror ) return false;
+                    masterPass = "";
+                    isFirst = false;
                 }
             }
 
-            // hold password file object
-            m_PasswordFile = wPWFile;
+            // If authenticated and save password flag is specified, save inputed password string
+            if ( d_savePassFlg )
+                AppData.SaveUserPassword( d_userPass );
 
-            // hold password string for future saving
-            m_Password = password;
+            // Load password file
+            PasswordFile pf = new PasswordFile();
+            if ( pf.Load( masterPass ) ) {
+                // hold opened password file
+                m_PasswordFile = pf;
+            }
+            else {
+                // If failed to file, create new empty file.
+                m_PasswordFile = new PasswordFile();
+            }
 
-            // If specifyed to save password, write password to local storage.
-            if ( savePasswordFlg )
-                ApplicationData.Current.LocalSettings.Values[ "Password" ] = password;
-            else
-                ApplicationData.Current.LocalSettings.Values.Remove( "Password" );
+            // hold master password string for future saving
+            m_Password = masterPass;
+            m_LastEditDate = DateTime.UtcNow;
+            EditEnableToggle.OnContent = SAVED_LABEL_TEXT;
 
             return true;
         }
@@ -469,6 +553,10 @@ namespace GomaShio
 
             // Select inserted account and update right pane.
             UpdateInquiryList( idx );
+
+            // Update last edit date time
+            m_LastEditDate = DateTime.UtcNow;
+            EditEnableToggle.OnContent = MODIFIED_LABEL_TEXT;
         }
 
         // On DeleteAccountButton clicked
@@ -508,6 +596,10 @@ namespace GomaShio
                     UpdateInquiryList( sidx );
                 }
             }
+
+            // Update last edit date time
+            m_LastEditDate = DateTime.UtcNow;
+            EditEnableToggle.OnContent = MODIFIED_LABEL_TEXT;
         }
 
         // CopyAccountButton is clicked
@@ -536,6 +628,10 @@ namespace GomaShio
 
             // Select inserted account and update right pane.
             UpdateInquiryList( sidx + 1 );
+
+            // Update last edit date time
+            m_LastEditDate = DateTime.UtcNow;
+            EditEnableToggle.OnContent = MODIFIED_LABEL_TEXT;
         }
 
         // Selection of AccountList is changed.
@@ -589,11 +685,14 @@ namespace GomaShio
             d.ItemValue = "";
             d.HideItemValue = false;
             await d.ShowAsync();
-            if ( d.IsOK ) {
-                ai.InsertInquiryFromPlainValue( idx, d.ItemName, d.ItemValue, d.HideItemValue );
-                UpdateInquiryList( m_SelectedAccount );
-                InquiryList.SelectedIndex = idx;
-            }
+            if ( !d.IsOK ) return ;
+
+            ai.InsertInquiryFromPlainValue( idx, d.ItemName, d.ItemValue, d.HideItemValue );
+            UpdateInquiryList( m_SelectedAccount );
+            InquiryList.SelectedIndex = idx;
+
+            // Save explicitly
+            SaveAccountFile();
         }
 
         // Delete inquiry button is clicked.
@@ -621,6 +720,10 @@ namespace GomaShio
             if ( si >= m_InquiryList_ItemCount )
                 si--;
             InquiryList.SelectedIndex = si;
+
+            // Update last edit date time
+            m_LastEditDate = DateTime.UtcNow;
+            EditEnableToggle.OnContent = MODIFIED_LABEL_TEXT;
         }
 
         // Copy inquiry button is clicked.
@@ -647,6 +750,10 @@ namespace GomaShio
             ai.InsertInquiryFromPlainValue( si, ai.GetInquiryName( si ), ai.GetInquiryValue( si ), ai.GetHideFlag( si ) );
             UpdateInquiryList( m_SelectedAccount );
             InquiryList.SelectedIndex = si;
+
+            // Update last edit date time
+            m_LastEditDate = DateTime.UtcNow;
+            EditEnableToggle.OnContent = MODIFIED_LABEL_TEXT;
         }
 
         // Copy inquiry to clipboard button created on inquiry list control is clicked.
@@ -712,6 +819,10 @@ namespace GomaShio
 
             m_PasswordFile.GetAccountInfo( m_SelectedAccount ).AccountName = AccountNameText.Text;
             m_AccountList_ItemNames[ m_SelectedAccount ].Text = AccountNameText.Text;
+
+            // Update last edit date time
+            m_LastEditDate = DateTime.UtcNow;
+            EditEnableToggle.OnContent = MODIFIED_LABEL_TEXT;
         }
 
         // Double clicked on the splitter
@@ -782,6 +893,10 @@ namespace GomaShio
             for ( int i = 0; i < InquiryList.Items.Count; i++ ) {
                 m_InquiryList_CopyButton[i].Click += m_InquiryList_CopyButton_Click[i];
             }
+
+            // Update last edit date time
+            m_LastEditDate = DateTime.UtcNow;
+            EditEnableToggle.OnContent = MODIFIED_LABEL_TEXT;
         }
 
         private void AccountList_DragItemsCompleted( ListViewBase sender, DragItemsCompletedEventArgs args )
@@ -829,6 +944,10 @@ namespace GomaShio
             m_AccountList_Border = rvAccountBorder;
 
             UpdateInquiryList( AccountList.SelectedIndex );
+
+            // Update last edit date time
+            m_LastEditDate = DateTime.UtcNow;
+            EditEnableToggle.OnContent = MODIFIED_LABEL_TEXT;
         }
 
         private async void InquiryList_DoubleTapped( object sender, DoubleTappedRoutedEventArgs e )
@@ -857,17 +976,20 @@ namespace GomaShio
             d.ItemValue = ai.GetInquiryValue( idx );
             d.HideItemValue = ai.GetHideFlag( idx );
             await d.ShowAsync();
-            if ( d.IsOK ) {
-                ai.SetInquiry( idx, d.ItemName, d.ItemValue, d.HideItemValue );
-                m_InquiryList_ItemTitles[idx].Text = d.ItemName;
-                if ( d.HideItemValue )
-                    m_InquiryList_ItemTexts[idx].Text = hiddenString;
-                else
-                    m_InquiryList_ItemTexts[idx].Text = d.ItemValue;
-            }
+            if ( !d.IsOK ) return ;
+
+            ai.SetInquiry( idx, d.ItemName, d.ItemValue, d.HideItemValue );
+            m_InquiryList_ItemTitles[idx].Text = d.ItemName;
+            if ( d.HideItemValue )
+                m_InquiryList_ItemTexts[idx].Text = hiddenString;
+            else
+                m_InquiryList_ItemTexts[idx].Text = d.ItemValue;
+
+            // Save explicitly
+            SaveAccountFile();
         }
 
-        private async void EditEnableToggle_Toggled( object sender, RoutedEventArgs e )
+        private void EditEnableToggle_Toggled( object sender, RoutedEventArgs e )
         {
             _ = sender;
             _ = e;
@@ -885,7 +1007,7 @@ namespace GomaShio
 
             if ( !m_EnableEdit && m_PasswordFile.IsModified ) {
                 // If set read-only mode from ediable mode and password file is modifyied, save tha file
-                await SaveAccountFile().ConfigureAwait( true );
+                SaveAccountFile();
             }
         }
 

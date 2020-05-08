@@ -1,13 +1,10 @@
-﻿using Windows.Storage;
-using Windows.Storage.Streams;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using System;
 using System.Text.RegularExpressions;
 using System.Text;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Security;
+using System.Threading;
 
 namespace GomaShio
 {
@@ -16,6 +13,7 @@ namespace GomaShio
         private AccountInfo[] m_AccountInfo;
         private int m_Count;
         private bool m_Modified;
+        //private SemaphoreSlim m_UpdateLock;
 
         public PasswordFile() {
             m_AccountInfo = new AccountInfo[16];
@@ -96,36 +94,12 @@ namespace GomaShio
         }
 
         // Read encrypted password file.
-        // 0 : succeed
-        // 1 : file read error
-        // 2 : password error
-        public async Task< int > Load( StorageFile file, string password )
+        public bool Load( string password )
         {
-            // get password file size
-            Windows.Storage.FileProperties.BasicProperties fProp = await file.GetBasicPropertiesAsync();
-            ulong fileSize = fProp.Size;
-            // If file is empty, loading is failed.
-            if ( fileSize <= 0 ) return 1;
-
-            // Read all of specified file.
-            byte[] encriptedData = new byte[ fileSize ];
-            using( IInputStream s = await file.OpenSequentialReadAsync() ) {
-                using ( var r = new DataReader( s ) ) {
-                    await r.LoadAsync( (uint)fileSize );
-                    r.ReadBytes( encriptedData );
-                }
-            }
-
-            bool passwordError = true;
-            string plainData = "";
-
-            // Decrypt read data.
-            if ( !Crypt.CipherDecryption( encriptedData, password, out plainData, out passwordError, false ) ) {
-                if ( passwordError )
-                    return 2;
-                else
-                    return 1;
-            }
+            // Get plain data
+            string plainData = AppData.Load( password );
+            if ( String.IsNullOrEmpty( plainData ) )
+                return false;
 
             // Recognize loaded string to AoountInfo
             var result = Recognize( plainData, false );
@@ -135,42 +109,16 @@ namespace GomaShio
             // Clear modified flag.
             m_Modified = false;
 
-            return 0;
-
+            return true;
         }
 
         // Write encrypted password file.
-        public async Task<bool> Save( StorageFile file, string password )
+        public bool Save( string password )
         {
-            // Create backup folder
-            StorageFolder localFolder = ApplicationData.Current.LocalFolder;
-            StorageFolder backupFolder = await localFolder.CreateFolderAsync( "backups", CreationCollisionOption.OpenIfExists );
-            
-            // Get old backup files list.
-            IReadOnlyList<StorageFile> oldBackups = null;
-            try {
-                oldBackups = await backupFolder.GetFilesAsync( Windows.Storage.Search.CommonFileQuery.OrderByName );
-            }
-            catch ( Exception e ) {
-            }
-
-            // Delete old backup files
-            for ( int i = 0; i < oldBackups.Count - 15; i++ )
-                await oldBackups[i].DeleteAsync();
-
-            // Build plain text data for output and encript that string.
-            byte[] encryptedData = Crypt.CipherEncryption( BuildStringForOutput( false ), password, false );
-
-            // Start to create a new backup file
-            string backupFileName = DateTime.Now.ToString( "yyyy-MM-dd-hh-mm-ss-fff", CultureInfo.InvariantCulture ) + ".GomaShio";
-            StorageFile backupFile = await backupFolder.CreateFileAsync( backupFileName );
-
-            // Write backup file
-            await FileIO.WriteBufferAsync( backupFile, encryptedData.AsBuffer() );
-            backupFile = null;
-
-            // Write target file
-            await FileIO.WriteBufferAsync( file, encryptedData.AsBuffer() );
+            // Save data
+            bool result = AppData.Save( password, BuildStringForOutput( false ) );
+            if ( !result )
+                return false;
 
             // Clear modified flag.
             m_Modified = false;
@@ -286,12 +234,22 @@ namespace GomaShio
                         continue;
                     bool hideFlag = String.Compare( hideFlagStr, "True", true, ci ) == 0;
                     if ( importPlainFlag ) {
+                        // If it is importing plain text file, all values is written in plain text.
+                        // There are not TempStr_*** values and hideFlag values is set true or false.
                         retval[curAccInfo].InsertInquiryFromPlainValue( retval[curAccInfo].GetInquiryCount(), inquiryName, inquiryValue, hideFlag );
                     }
                     else {
-                        string tempStr = currentSection.GetValueOrDefault( String.Format( ci, "TempStr_{0}", j ), null );
-                        if ( null == tempStr ) continue;
-                        retval[curAccInfo].InsertInquiryWithTempStr( retval[curAccInfo].GetInquiryCount(), inquiryName, inquiryValue, hideFlag, tempStr );
+                        // If it is not importing plain text file, hidden value is encrypted by TempStr_*** value.
+                        if ( hideFlag ) {
+                            // If hide flag is set true, there must be TempStr_*** value.
+                            string tempStr = currentSection.GetValueOrDefault( String.Format( ci, "TempStr_{0}", j ), null );
+                            if ( null == tempStr ) continue;
+                            retval[curAccInfo].InsertInquiryWithTempStr( retval[curAccInfo].GetInquiryCount(), inquiryName, inquiryValue, tempStr );
+                        }
+                        else {
+                            // If hide flag is set to false, value is not encrypted.
+                            retval[curAccInfo].InsertInquiryFromPlainValue( retval[curAccInfo].GetInquiryCount(), inquiryName, inquiryValue, false );
+                        }
                     }
                 }
                 curAccInfo++;

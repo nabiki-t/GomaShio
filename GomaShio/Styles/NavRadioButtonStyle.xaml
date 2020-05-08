@@ -4,7 +4,6 @@
     >
 
     <SolidColorBrush x:Key="SplitViewBackgroundBrush" Color="{ThemeResource SystemAltHighColor}" Opacity="1" />
-    <!--<SolidColorBrush x:Key="SplitViewForegroundBrush" Color="{ThemeResource SystemChromeBlackHighColor}" />-->
     <SolidColorBrush x:Key="SplitViewForegroundBrush" Color="#FF1F4570" />
     <SolidColorBrush x:Key="NavButtonPressedBackgroundBrush" Color="{ThemeResource SystemListMediumColor}" />
     <SolidColorBrush x:Key="NavButtonHoverBackgroundBrush" Color="{ThemeResource SystemListLowColor}" />
@@ -144,7 +143,6 @@
                             </Grid.Resources>
 
                             <!-- background -->
-
                             <Grid x:Name="NotCheckedBackground" Grid.ColumnSpan="4">
                                 <Rectangle x:Name="PressedBackground" Visibility="Collapsed" Fill="{StaticResource NavButtonPressedBackgroundBrush}"/>
                                 <Rectangle x:Name="HoverBackground" Visibility="Collapsed" Fill="{StaticResource NavButtonHoverBackgroundBrush}"/>

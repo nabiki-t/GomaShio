@@ -129,6 +129,18 @@
   <data name="AppMessageBoxTitle" xml:space="preserve">
     <value>GomaShio</value>
   </data>
+  <data name="ChangePasswordButton.Content" xml:space="preserve">
+    <value>パスワード変更</value>
+  </data>
+  <data name="ChangePasswordDescription.Text" xml:space="preserve">
+    <value>パスワードを変更します。</value>
+  </data>
+  <data name="CONFIRM_INITIALIZE_CANCEL_MSG" xml:space="preserve">
+    <value>やめておきます</value>
+  </data>
+  <data name="CONFIRM_INITIALIZE_OK_MSG" xml:space="preserve">
+    <value>全て削除します</value>
+  </data>
   <data name="CopyAccountButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>選択されたアカウントを複製</value>
   </data>
@@ -136,10 +148,10 @@
     <value>選択された項目を複製</value>
   </data>
   <data name="CreateNewDescription.Text" xml:space="preserve">
-    <value>保存対象のファイルを新規に作成します。既存のファイルを指定した場合は、ファイルの内容はすべて削除されます。</value>
+    <value>全てのデータを初期化し、パスワードを設定します。</value>
   </data>
   <data name="CreateNewPasswordFileButton.Content" xml:space="preserve">
-    <value>新規に作成する</value>
+    <value>初期化</value>
   </data>
   <data name="DefaultPasswordDigits" xml:space="preserve">
     <value>8</value>
@@ -157,6 +169,12 @@
     <value>読取専用</value>
   </data>
   <data name="EditEnableToggle.OnContent" xml:space="preserve">
+    <value>変更可</value>
+  </data>
+  <data name="EditEnableToggle_ModifiedText" xml:space="preserve">
+    <value>変更可(変更済み)</value>
+  </data>
+  <data name="EditEnableToggle_SavedText" xml:space="preserve">
     <value>変更可</value>
   </data>
   <data name="EditInquiryDialog.PrimaryButtonText" xml:space="preserve">
@@ -189,6 +207,12 @@
   <data name="ImportPasswordFileDescription.Text" xml:space="preserve">
     <value>ファイルに出力した平文のパスワード一覧を読み込みます。現在登録されているパスワードはすべて削除されます。</value>
   </data>
+  <data name="INIT_CONFIRM_MSG" xml:space="preserve">
+    <value>バックアップも含め、登録されている全てのデータが削除されます。実行しますか？</value>
+  </data>
+  <data name="INIT_CONFIRM_MSG_TITLE" xml:space="preserve">
+    <value>初期化の確認</value>
+  </data>
   <data name="InquiryDefaultName1.Text" xml:space="preserve">
     <value>ユーザID</value>
   </data>
@@ -220,7 +244,7 @@
     <value>パスワードファイルの読み込みに失敗しました。</value>
   </data>
   <data name="MSG_INITIAL_USE_MSG" xml:space="preserve">
-    <value>初めて使用する時は、パスワードと保存先のファイル名を指定してください。</value>
+    <value>初めて使用する時はログイン時のパスワードを指定してください。</value>
   </data>
   <data name="NewPassDSavePasswordCheck.Content" xml:space="preserve">
     <value>パスワードを保存する</value>
@@ -255,12 +279,6 @@
   <data name="PasswordErrorText.Text" xml:space="preserve">
     <value>パスワードが違います</value>
   </data>
-  <data name="PasswordText1Title.Text" xml:space="preserve">
-    <value>暗号・復号に使用するパスワードを入力してください</value>
-  </data>
-  <data name="PasswordText2Title.Text" xml:space="preserve">
-    <value>確認のためもう一度入力して下さい</value>
-  </data>
   <data name="PASS_HIDDEN_STRING" xml:space="preserve">
     <value>******</value>
   </data>
@@ -279,6 +297,12 @@
   <data name="RecoveryFromBackupDescription.Text" xml:space="preserve">
     <value>バックアップファイルから古いパスワードファイルを取得します。</value>
   </data>
+  <data name="RECOVERY_BACKUP_RESULT_FAILED" xml:space="preserve">
+    <value>バックアップ {0} からの回復に失敗しました</value>
+  </data>
+  <data name="RECOVERY_BACKUP_RESULT_SUCCEED" xml:space="preserve">
+    <value>バックアップ {0} から回復しました</value>
+  </data>
   <data name="SavePasswordCheck.Content" xml:space="preserve">
     <value>パスワードを保存する</value>
   </data>
@@ -292,13 +316,28 @@
     <value>既存のファイルを使う</value>
   </data>
   <data name="SetNewPassDialog.PrimaryButtonText" xml:space="preserve">
-    <value>OK</value>
+    <value>変更する</value>
   </data>
   <data name="SetNewPassDialog.SecondaryButtonText" xml:space="preserve">
-    <value>キャンセル</value>
+    <value>中止する</value>
   </data>
   <data name="SetNewPassDialog.Title" xml:space="preserve">
     <value>パスワードの設定</value>
+  </data>
+  <data name="SetNewPassDialog_ChangePass_PrimaryButtonText" xml:space="preserve">
+    <value>変更する</value>
+  </data>
+  <data name="SetNewPassDialog_SetNewPass_PrimaryButtonText" xml:space="preserve">
+    <value>設定する</value>
+  </data>
+  <data name="SetPasswordDlgConfirmTitle.Text" xml:space="preserve">
+    <value>確認のためもう一度入力して下さい</value>
+  </data>
+  <data name="SetPasswordDlgNewTitle.Text" xml:space="preserve">
+    <value>暗号・復号に使用するパスワードを入力してください</value>
+  </data>
+  <data name="SetPasswordDlgOldTitle.Text" xml:space="preserve">
+    <value>古いパスワードを入力してください</value>
   </data>
   <data name="TextFileTypeDescription" xml:space="preserve">
     <value>テキストファイル</value>

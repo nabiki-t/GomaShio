@@ -49,10 +49,16 @@ namespace GomaShio
             IsOK = false;
 
             // Restore password configuration
-            if ( ApplicationData.Current.LocalSettings.Values.ContainsKey( "PasswordDigit" ) )
-                PasswordDigit.Text = (string)ApplicationData.Current.LocalSettings.Values[ "PasswordDigit" ];
+            if ( ApplicationData.Current.LocalSettings.Values.ContainsKey( "PasswordDigit" ) ) {
+                string passwordDigit = (string)ApplicationData.Current.LocalSettings.Values[ "PasswordDigit" ];
+                if ( String.IsNullOrEmpty( passwordDigit ) )
+                    PasswordDigit.Text = "";
+                else
+                    PasswordDigit.Text = passwordDigit;
+            }
             else
                 PasswordDigit.Text = GlbFunc.GetResourceString( "DefaultPasswordDigits", "8" );
+
             if ( ApplicationData.Current.LocalSettings.Values.ContainsKey( "PassLowerCaseCheck" ) )
                 PassLowerCaseCheck.IsChecked = (bool)ApplicationData.Current.LocalSettings.Values[ "PassLowerCaseCheck" ];
             else
@@ -69,8 +75,13 @@ namespace GomaShio
                 PassSymbolCheck.IsChecked = (bool)ApplicationData.Current.LocalSettings.Values[ "PassSymbolCheck" ];
             else
                 PassSymbolCheck.IsChecked = true;
-            if ( ApplicationData.Current.LocalSettings.Values.ContainsKey( "PassSymbolCandidate" ) )
-                PassSymbolCandidate.Text = (string)ApplicationData.Current.LocalSettings.Values[ "PassSymbolCandidate" ];
+            if ( ApplicationData.Current.LocalSettings.Values.ContainsKey( "PassSymbolCandidate" ) ) {
+                string passSymbolCandidate = (string)ApplicationData.Current.LocalSettings.Values[ "PassSymbolCandidate" ];
+                if ( String.IsNullOrEmpty( passSymbolCandidate ) )
+                    PassSymbolCandidate.Text = "";
+                else
+                    PassSymbolCandidate.Text = passSymbolCandidate;
+            }
             else
                 PassSymbolCandidate.Text = GlbFunc.GetResourceString( "DefaultSymbolCandidateString", "!$%'()*,/;=>?[]{}" );
             if ( ApplicationData.Current.LocalSettings.Values.ContainsKey( "PassExcludeConfuseCheck" ) )

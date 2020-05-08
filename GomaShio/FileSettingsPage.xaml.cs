@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using System.Text;
 using System.IO;
 using System.Security;
+using Windows.ApplicationModel.Resources;
+using Windows.UI.Popups;
 
 namespace GomaShio
 {
@@ -21,20 +23,13 @@ namespace GomaShio
         public FileSettingsPage()
         {
             this.InitializeComponent();
-            UpdateWindowStat();
         }
 
-        /// <summary>
-        /// SelectExistingPasswordFileButton button was selected.
-        /// </summary>
-        private async void SelectExistingPasswordFileButton_Click( object sender, RoutedEventArgs e )
+        private async void Page_Loaded( object sender, RoutedEventArgs e )
         {
             _ = sender;
             _ = e;
-
-            FileOpenPicker p = new FileOpenPicker();
-            p.FileTypeFilter.Add( ".GomaShio" );
-            UpdateSelectedFileInfo( await p.PickSingleFileAsync() );
+            await UpdateWindowStat().ConfigureAwait( true );
         }
 
         /// <summary>
@@ -45,65 +40,101 @@ namespace GomaShio
             _ = sender;
             _ = e;
 
-            FileSavePicker p = new FileSavePicker();
-            p.FileTypeChoices.Add( GlbFunc.GetResourceString( "GomaShioFileTypeDescription", "GomaShio Password File" ), new List<string>() { ".GomaShio" } );
-            p.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+            ResourceLoader r = ResourceLoader.GetForCurrentView();
+            if ( await AppData.IsInitialized().ConfigureAwait( true ) ) {
+                // Clear existing account information and set new password
+           
+                string titleStr = null;
+                if ( null != r )
+                    titleStr = r.GetString( "INIT_CONFIRM_MSG_TITLE" );
+                if ( null == titleStr )
+                    titleStr = "Confirmation";
 
-            // Get the password of the new file.
-            SetNewPassDialog d = new SetNewPassDialog();
-            await d.ShowAsync();
-            if ( !d.IsOK ) return;
-            string password = d.Password;
-            bool savePasswordFlg = d.SavePassword;
+                string msgStr = null;
+                if ( null != r )
+                   msgStr = r.GetString( "INIT_CONFIRM_MSG" );
+                if ( null == msgStr )
+                    msgStr = "All registered data will be deleted, including backup. Do you want to run it?";
 
-            // Get output path name of a new GomaShio password file.
-            StorageFile f = await p.PickSaveFileAsync();
-            if ( null == f ) return ;
+                MessageDialog msgDlg = new MessageDialog( msgStr, titleStr );
+                string okLabel = GlbFunc.GetResourceString( "CONFIRM_INITIALIZE_OK_MSG", "OK" );
+                string cancelLabel = GlbFunc.GetResourceString( "CONFIRM_INITIALIZE_CANCEL_MSG", "Cancel" );
+                msgDlg.Commands.Add( new UICommand( okLabel ) );
+                msgDlg.Commands.Add( new UICommand( cancelLabel ) );
+                var result = await msgDlg.ShowAsync();
+                if ( result.Label != okLabel ) return ;
 
-            // Create empty file
-            PasswordFile nf = new PasswordFile();
-            if ( !await nf.Save( f, password ).ConfigureAwait( true ) ) {
-                GlbFunc.ShowMessage( "MSG_FAILED_CREATE_NEW_FILE", "It failed to create new password file, please fix cause of any error." );
-                return ;
+                // Get the password of the new file.
+                SetNewPassDialog newPassDlg = new SetNewPassDialog( false, false );
+                await newPassDlg.ShowAsync();
+                if ( !newPassDlg.IsOK ) return;
+                AppData.Initialize( newPassDlg.Password, newPassDlg.SavePassword );
+
             }
+            else {
+                // Specify new password and initialize data structure.
 
-            UpdateSelectedFileInfo( f );
-
-            if ( d.SavePassword )
-                ApplicationData.Current.LocalSettings.Values[ "Password" ] = password;
-            else
-                ApplicationData.Current.LocalSettings.Values.Remove( "Password" );
+                // Get the password of the new file.
+                SetNewPassDialog d = new SetNewPassDialog( false, false );
+                await d.ShowAsync();
+                if ( !d.IsOK ) return;
+                AppData.Initialize( d.Password, d.SavePassword );
+            }
+            await UpdateWindowStat().ConfigureAwait( true );
         }
 
-        /// <summary>
-        /// Update PassrowdFile file name and permission information.
-        /// </summary>
-        void UpdateSelectedFileInfo( StorageFile f ) {
-            if ( null != f ) {
-                SelectedFileNameTextBox.Text = f.Path;
-                ApplicationData.Current.LocalSettings.Values[ "FileName" ] = f.Path;
-                StorageApplicationPermissions.MostRecentlyUsedList.Clear();
-                ApplicationData.Current.LocalSettings.Values[ "FileToken" ] = 
-                    StorageApplicationPermissions.MostRecentlyUsedList.Add( f );
-            }
-            UpdateWindowStat();
-        }
-
-        void UpdateWindowStat()
+        private async void ChangePasswordButton_Click( object sender, RoutedEventArgs e )
         {
-            string ftoken = "";
-            if ( ApplicationData.Current.LocalSettings.Values.ContainsKey( "FileToken" ) )
-                ftoken = (string)ApplicationData.Current.LocalSettings.Values[ "FileToken" ];
-            SelectExistingPasswordFileButton.IsEnabled = true;
-            CreateNewPasswordFileButton.IsEnabled = true;
-            ExportPasswordFileButton.IsEnabled = !string.IsNullOrEmpty( ftoken );
-            ImportPasswordFileButton.IsEnabled = !string.IsNullOrEmpty( ftoken );
-            RecoveryFromBackupButton.IsEnabled = !string.IsNullOrEmpty( ftoken );
+            _ = sender;
+            _ = e;
 
-            if ( ApplicationData.Current.LocalSettings.Values.ContainsKey( "FileName" ) )
-                SelectedFileNameTextBox.Text = (String)ApplicationData.Current.LocalSettings.Values[ "FileName" ];
-            else
-                SelectedFileNameTextBox.Text = "";
+            // Show password dialog at first time.
+            SetNewPassDialog d = new SetNewPassDialog( true, false );
+            d.Password = "";
+            await d.ShowAsync();
+
+            // If canceled, give up to change password.
+            if ( !d.IsOK ) return;
+
+            string currentPass = d.OldPassword;
+            string newPass = d.Password;
+            bool saveFlg = d.SavePassword;
+
+            // Try to change password, and if failed, request new password again.
+            while ( !AppData.ChangeUserPassword( currentPass, newPass ) ) {
+                // Show dialog
+                d = new SetNewPassDialog( true, true );
+                d.Password = newPass;
+                d.SavePassword = saveFlg;
+                await d.ShowAsync();
+
+                // If canceled, give up to change password.
+                if ( !d.IsOK ) return;
+
+                currentPass = d.OldPassword;
+                newPass = d.Password;
+                saveFlg = d.SavePassword;
+            }
+
+            if ( saveFlg ) {
+                // If save password flag is set, save new password string.
+                AppData.SaveUserPassword( newPass );
+            }
+            else {
+                // If save password flag is not set, clear saved old password.
+                AppData.ClearSavedUserPassword();
+            }
+
+        }
+
+        async Task UpdateWindowStat()
+        {
+            bool initflg = await AppData.IsInitialized().ConfigureAwait( true );
+            CreateNewPasswordFileButton.IsEnabled = true;
+            ChangePasswordButton.IsEnabled = initflg;
+            ExportPasswordFileButton.IsEnabled = initflg;
+            ImportPasswordFileButton.IsEnabled = initflg;
+            RecoveryFromBackupButton.IsEnabled = initflg;
         }
 
         /// <summary>
@@ -117,9 +148,8 @@ namespace GomaShio
             // Load selected password file. If not selected ignore this event
             var r = await LoadSelectedPasswordFile().ConfigureAwait( true );
             PasswordFile pwfile = r.Item1;
-            StorageFile stfile = r.Item2;
-            string password = r.Item3;
-            if ( string.IsNullOrEmpty( password ) || null == stfile || null == pwfile )
+            string password = r.Item2;
+            if ( string.IsNullOrEmpty( password ) || null == pwfile )
                 return ;
 
             // Get output path name of a new plain text file
@@ -147,9 +177,8 @@ namespace GomaShio
             // Load selected password file. If not selected ignore this event
             var r = await LoadSelectedPasswordFile().ConfigureAwait( true );
             PasswordFile pwfile = r.Item1;
-            StorageFile stfile = r.Item2;
-            string password = r.Item3;
-            if ( string.IsNullOrEmpty( password ) || null == stfile || null == pwfile )
+            string password = r.Item2;
+            if ( string.IsNullOrEmpty( password ) || null == pwfile )
                 return ;
 
             // get import source file.
@@ -165,84 +194,69 @@ namespace GomaShio
             pwfile.Import( str );
 
             // Save new password file
-            await pwfile.Save( stfile, password ).ConfigureAwait( true );
+            pwfile.Save( password );
         }
 
         // Load password file
-        private static async Task< Tuple< PasswordFile, StorageFile, string > > LoadSelectedPasswordFile()
+        private static async Task< Tuple< PasswordFile, string > > LoadSelectedPasswordFile()
         {
-            // If password file is not selected, abort load file
-            string ftoken = "";
-            if ( ApplicationData.Current.LocalSettings.Values.ContainsKey( "FileToken" ) )
-                ftoken = (string)ApplicationData.Current.LocalSettings.Values[ "FileToken" ];
-            if ( string.IsNullOrEmpty( ftoken ) )
-                return new Tuple< PasswordFile, StorageFile, string >( null, null, "" );
-            StorageFile stFile = null;
-            try {
-                stFile = await StorageApplicationPermissions.MostRecentlyUsedList.GetFileAsync( ftoken );
-            }
-            catch ( FileNotFoundException ) { }
-            catch ( UnauthorizedAccessException ) { }
-            catch ( ArgumentException ) { };
-            if ( null == stFile )
-                return new Tuple< PasswordFile, StorageFile, string >( null, null, "" );
-
             // Get stored password
-            string password = "";
-            bool savePasswordFlg = ApplicationData.Current.LocalSettings.Values.ContainsKey( "Password" );
-            if ( savePasswordFlg )
-                password = (string)ApplicationData.Current.LocalSettings.Values[ "Password" ];
+            string savedPass = AppData.GetSavedUserPassword();
+            string masterPass = "";
+            bool passerror;
+            bool isFirst = true;
+
+            if ( !string.IsNullOrEmpty( savedPass ) ) {
+                if ( !AppData.Authenticate( savedPass, out passerror, out masterPass ) ) {
+                    if ( !passerror ) {
+                        // Unexpected error
+                        return new Tuple< PasswordFile, string >( null, "" );
+                    }
+                    masterPass = "";
+                    isFirst = false;
+                }
+            }
+
+            string d_userPass = "";
+            bool d_savePassFlg = false;
+            while( string.IsNullOrEmpty( masterPass ) ) {
+
+                // Show password dialog
+                PasswordDialog d = new PasswordDialog();
+                d.Password = d_userPass;
+                d.SavePassword = d_savePassFlg;                
+                d.IsFirstTime = isFirst;
+                await d.ShowAsync();
+
+                // If canceled, failed to load file
+                if ( !d.IsOK )
+                    return new Tuple< PasswordFile, string >( null, "" );
+                d_userPass = d.Password;
+                d_savePassFlg = d.SavePassword;
+
+                if ( !AppData.Authenticate( d_userPass, out passerror, out masterPass ) ) {
+                    if ( !passerror ) {
+                        // Unexpected error
+                        return new Tuple< PasswordFile, string >( null, "" );
+                    }
+                    // Retry
+                    masterPass = "";
+                    isFirst = false;
+                }
+            }
+
+            // If authenticated and save password flag is specified, save inputed password string
+            if ( d_savePassFlg )
+                AppData.SaveUserPassword( d_userPass );
 
             PasswordFile pwFile = new PasswordFile();
-
-            // If password is saved, load specified file.
-            int loadResult = 2;
-            if ( !string.IsNullOrEmpty( password ) ) {
-                loadResult = await pwFile.Load( stFile, password ).ConfigureAwait( true );
-                // If faile IO error is occured, return with failed.
-                if ( 1 == loadResult ) {
-                    GlbFunc.ShowMessage( "MSG_FAILED_LOAD_PASSWORD_FILE", "Failed to load password file" );
-                    return new Tuple< PasswordFile, StorageFile, string >( null, null, "" );
-                }
+            bool loadResult = pwFile.Load( masterPass );
+            if ( !loadResult ) {
+                // Unexpected error
+                return new Tuple< PasswordFile, string >( null, "" );
             }
 
-            // Open password file with getting password string.
-            PasswordDialog d = new PasswordDialog();
-            d.IsFirstTime = true;
-            while ( 2 == loadResult ) {
-                // Get new password
-                d.Password = password;
-                d.SavePassword = savePasswordFlg;
-                await d.ShowAsync();
-                // If canceld, if failed to load.
-                if ( !d.IsOK )
-                    return new Tuple< PasswordFile, StorageFile, string >( null, null, "" );
-
-                password = d.Password;
-                savePasswordFlg = d.SavePassword;
-                d.IsFirstTime = false;
-
-                // load file
-                loadResult = await pwFile.Load( stFile, password ).ConfigureAwait( true );
-                switch( loadResult ) {
-                case 0: // success
-                        break;
-                case 1: // file read error
-                        GlbFunc.ShowMessage( "MSG_FAILED_LOAD_PASSWORD_FILE", "Failed to load password file" );
-                        return new Tuple< PasswordFile, StorageFile, string >( null, null, "" );
-                case 2: // password error
-                        Task.Delay( TimeSpan.FromMilliseconds( 500 ) ).Wait();
-                        break;
-                }
-            }
-
-            // If specifyed to save password, write password to local storage.
-            if ( savePasswordFlg )
-                ApplicationData.Current.LocalSettings.Values[ "Password" ] = password;
-            else
-                ApplicationData.Current.LocalSettings.Values.Remove( "Password" );
-
-            return new Tuple< PasswordFile, StorageFile, string >( pwFile, stFile, password );
+            return new Tuple< PasswordFile, string >( pwFile, masterPass );
         }
 
         private async void RecoveryFromBackupButton_Click( object sender, RoutedEventArgs e )
@@ -250,23 +264,9 @@ namespace GomaShio
             _ = sender;
             _ = e;
 
-            // If password file is not selected, ignore this operation
-            string ftoken = "";
-            if ( ApplicationData.Current.LocalSettings.Values.ContainsKey( "FileToken" ) )
-                ftoken = (string)ApplicationData.Current.LocalSettings.Values[ "FileToken" ];
-            if ( string.IsNullOrEmpty( ftoken ) )
-                return ;
-
             // Show recovery dialog
             await ( new RecoveryBackupDialog() ).ShowAsync();
         }
-/*
-        private void dummyButton_Click( object sender, RoutedEventArgs e )
-        {
-            _ = sender;
-            _ = e;
-            dummyList.Items.Add( new TextBlock{ Text="aaa", Margin=new Thickness(0.0) } );
-        }
-*/
+
     }
 }

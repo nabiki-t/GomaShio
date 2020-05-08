@@ -20,11 +20,11 @@ namespace GomaShio
         /// It called on starting of the application.
         /// It decide that configurations is made up or not, and show the next page.
         /// </summary>
-        protected override void OnNavigatedTo(NavigationEventArgs e)
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
-            if ( !DecideInitialized() ) {
+            if ( !await AppData.IsInitialized().ConfigureAwait( true ) ) {
                 // If first time, show FileSettingsPage.
-                GlbFunc.ShowMessage( "MSG_INITIAL_USE_MSG", "On first use, specify password file name and master pasword." );
+                await GlbFunc.ShowMessage( "MSG_INITIAL_USE_MSG", "On first use, specify password file name and master pasword." ).ConfigureAwait( true );
                 MainPageConfiguRadio.IsChecked = true;
             }
             else {
@@ -48,30 +48,19 @@ namespace GomaShio
         /// PasswordListPage was selected in the menu.
         /// If configurations is made up already, navigate to password list page, if not, ignore this event.
         /// </summary>
-        private void RadioButton2_Checked(object sender, RoutedEventArgs e)
+        private async void RadioButton2_Checked(object sender, RoutedEventArgs e)
         {
             _ = sender;
             _ = e;
+
             // if it is not initialized, show FileSettingsPage forcly.
-            if ( !DecideInitialized() ) {
+            if ( !await AppData.IsInitialized().ConfigureAwait( true ) ) {
                 MainPageConfiguRadio.IsChecked = true;
             }
             else {
                 MainContentFrame.Navigate(typeof(PasswordListPage));
                 splitView.IsPaneOpen = false;
             }
-        }
-
-        /// <summary>
-        /// Decide that the initial settings are registerd or not.
-        /// </summary>
-        static private Boolean DecideInitialized()
-        {
-            String t = "";
-            if ( ApplicationData.Current.LocalSettings.Values.ContainsKey( "FileToken" ) ) {
-                t = (String)ApplicationData.Current.LocalSettings.Values[ "FileToken" ];
-            }
-            return ( !string.IsNullOrEmpty( t ) );
         }
     }
 }

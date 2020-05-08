@@ -128,6 +128,7 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="AppData.cs" />
     <Compile Include="Crypt.cs" />
     <Compile Include="EditInquiry.xaml.cs">
       <DependentUpon>EditInquiry.xaml</DependentUpon>

@@ -16,6 +16,7 @@
         <StackPanel >
             <ComboBox Name="BackupFilesCombo"  Height="34" HorizontalAlignment="Stretch"/>
             <Button x:Uid="RecoveryBackupGetButton" Name="RecoveryBackupGetButton" Content="Get" HorizontalAlignment="Right" Width="81" Height="32" Click="RecoveryBackupGetButton_Click"/>
+            <TextBlock Name="RecoveryBackupResultText" Text="" Foreground="Red"/>
         </StackPanel>
     </Grid>
 </ContentDialog>

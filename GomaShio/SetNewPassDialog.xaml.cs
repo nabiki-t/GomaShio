@@ -5,21 +5,46 @@ namespace GomaShio
     public sealed partial class SetNewPassDialog : ContentDialog
     {
         public bool IsOK { get; set; }
+        public string OldPassword { get; set; }
         public string Password { get; set; }
         public bool SavePassword { get; set; }
 
-        public SetNewPassDialog()
+        private bool m_NeedOldPassword;
+
+        public SetNewPassDialog( bool needOldPassword, bool unmatchMsg )
         {
             this.InitializeComponent();
+
             IsOK = false;
             if ( null == Password )
                 Password = "";
 
-            PasswordText1.Text = Password;
-            PasswordText2.Text = Password;
-            SavePasswordCheck.IsChecked = SavePassword;
+            m_NeedOldPassword = needOldPassword;
 
-            this.IsPrimaryButtonEnabled = ( PasswordText1.Text.Length > 1 );
+            if ( needOldPassword ) {
+                SetPasswordDlgOldTitle.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                OldPasswordText.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                if ( unmatchMsg ) {
+                    PasswordErrorText.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                }
+                else {
+                    PasswordErrorText.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                }
+                PrimaryButtonText = GlbFunc.GetResourceString( "SetNewPassDialog_ChangePass_PrimaryButtonText", "OK" );
+            }
+            else {
+                SetPasswordDlgOldTitle.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                OldPasswordText.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                PasswordErrorText.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                PrimaryButtonText = GlbFunc.GetResourceString( "SetNewPassDialog_SetNewPass_PrimaryButtonText", "OK" );
+            }
+
+            OldPasswordText.Text = "";
+            NewPasswordText.Text = Password;
+            ConfirmText.Text = Password;
+            SavePasswordCheck.IsChecked = false;
+
+            this.IsPrimaryButtonEnabled = false;
         }
 
         // OK button is clicked
@@ -27,11 +52,12 @@ namespace GomaShio
         {
             _ = sender;
             _ = args;
-            if ( PasswordText1.Text != PasswordText2.Text || PasswordText1.Text.Length <= 1 ) {
-                return ;
-            }
+
+            if ( !CheckPrimaryButtonStatus() ) return ;
+
             IsOK = true;
-            Password = PasswordText1.Text;
+            OldPassword = OldPasswordText.Text;
+            Password = NewPasswordText.Text;
             SavePassword = SavePasswordCheck.IsChecked.GetValueOrDefault( false );
         }
 
@@ -43,20 +69,41 @@ namespace GomaShio
             IsOK = false;
         }
 
-        // On edit PasswordText1 textbox
-        private void PasswordText1_TextChanged( object sender, TextChangedEventArgs e )
+        private void OldPasswordText_TextChanged( object sender, TextChangedEventArgs e )
         {
             _ = sender;
             _ = e;
-            IsPrimaryButtonEnabled = ( PasswordText1.Text == PasswordText2.Text && PasswordText1.Text.Length > 1 );
+            this.IsPrimaryButtonEnabled = CheckPrimaryButtonStatus();
         }
 
-        // On edit PasswordText2 textbox
-        private void PasswordText2_TextChanged( object sender, TextChangedEventArgs e )
+        // On edit NewPasswordText textbox
+        private void NewPasswordText_TextChanged( object sender, TextChangedEventArgs e )
         {
             _ = sender;
             _ = e;
-            IsPrimaryButtonEnabled = ( PasswordText1.Text == PasswordText2.Text && PasswordText1.Text.Length > 1 );
+            this.IsPrimaryButtonEnabled = CheckPrimaryButtonStatus();
+        }
+
+        // On edit ConfirmText textbox
+        private void ConfirmText_TextChanged( object sender, TextChangedEventArgs e )
+        {
+            _ = sender;
+            _ = e;
+            this.IsPrimaryButtonEnabled = CheckPrimaryButtonStatus();
+        }
+
+        // Check OK button is enabled or not
+        bool CheckPrimaryButtonStatus()
+        {
+            // If old password is needed and old password is empty or extremely short, OK button is disabled.
+            if ( m_NeedOldPassword && OldPasswordText.Text.Length <= 1 )
+                return false;
+
+            // If new password and confirm is not match, or new password is extremely short, OK button is disabled.
+            if ( NewPasswordText.Text != ConfirmText.Text || NewPasswordText.Text.Length <= 1 )
+                return false;
+
+            return true;
         }
     }
 }
